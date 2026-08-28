@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { Check, ChevronLeft, Copy, KeyRound, LogOut, Plus, Search, ShieldCheck, Tv } from 'lucide-react'
+import { ChevronLeft, Copy, KeyRound, LogOut, Plus, Search, ShieldCheck, Tv } from 'lucide-react'
 import { configured, supabase } from './supabase'
 
 type Platform = { id: string; name: string }
@@ -20,14 +20,28 @@ function Lookup({onAdmin}:{onAdmin:()=>void}) {
   const submit=async(e:FormEvent)=>{e.preventDefault();setResult(null);setMessage('');setLoading(true)
     if(!configured){setTimeout(()=>{setMessage('El sistema está listo para conectar con Supabase.');setLoading(false)},500);return}
     const {data,error}=await supabase.functions.invoke('lookup-code',{body:{email,platform_id:platform}}); setLoading(false)
-    if(error||!data?.assignment){setMessage(data?.message||'No encontramos un código disponible con esos datos.');return} setResult(data.assignment)
+    if(error||!data?.assignment){setMessage(data?.message||'Correo o datos de acceso incorrectos.');return} setResult(data.assignment)
   }
   const copy=async()=>{if(!result)return;await navigator.clipboard.writeText(result.code);setCopied(true);setTimeout(()=>setCopied(false),1800)}
-  return <main className="shell"><nav><div className="brand"><div className="brandmark"><Tv size={22}/></div><span>Huerta <b>Digital</b></span></div><button className="admin-link" onClick={onAdmin}><ShieldCheck size={17}/> Administrador</button></nav>
-    <section className="hero"><div className="eyebrow"><span></span>CÓDIGOS DE ACCESO</div><h1>Encuentra tu código<br/><em>rápido y seguro</em></h1><p>Ingresa el correo de tu cuenta y selecciona la plataforma para consultar el código que te asignamos.</p>
-      <form className="card lookup" onSubmit={submit}><label>Correo de tu cuenta</label><div className="field"><span>@</span><input required type="email" placeholder="cliente@correo.com" value={email} onChange={e=>setEmail(e.target.value)}/></div><label>¿Qué plataforma necesitas?</label><div className="platforms">{demoPlatforms.map(p=><button type="button" key={p.id} className={platform===p.id?'selected':''} onClick={()=>setPlatform(p.id)}><span>{p.name.slice(0,1)}</span>{p.name}{platform===p.id&&<Check size={15}/>}</button>)}</div><button className="primary" disabled={!platform||loading}><Search size={19}/>{loading?'Buscando...':'Buscar mi código'}</button>
-        {message&&<div className="notice">{message}</div>}{result&&<div className="result"><small>CÓDIGO PARA {result.platform.toUpperCase()}</small><strong>{result.code}</strong><button type="button" onClick={copy}><Copy size={17}/>{copied?'Copiado':'Copiar código'}</button><p>Este código quedó marcado como consultado.</p></div>}</form>
-      <div className="trust"><ShieldCheck/><div><b>Tus datos están protegidos</b><span>Solo mostramos el código asociado a tu correo y plataforma.</span></div></div></section><footer>© 2026 Huerta Digital · Soporte de plataformas</footer></main>
+  return <main className="shell secure-shell">
+    <nav><div className="brand"><div className="brandmark"><Tv size={22}/></div><span>Huerta <b>Digital</b></span></div><button className="admin-link" onClick={onAdmin}><ShieldCheck size={17}/> Administrador</button></nav>
+    <section className="secure-hero">
+      <div className="secure-pill"><span></span>MULTI-PLATAFORMA</div>
+      <h1>Web<br/><em>Segura</em></h1>
+      <p>Acceso seguro y automático a los códigos de verificación de las principales plataformas.</p>
+      <form className="secure-card" onSubmit={submit}>
+        <h3><Search size={15}/> Consultar datos de acceso</h3>
+        <div className="secure-fields">
+          <div><label>PLATAFORMA <b>*</b></label><select required value={platform} onChange={e=>setPlatform(e.target.value)}><option value="">Seleccionar</option>{demoPlatforms.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div><label>CORREO <b>*</b></label><input required type="email" placeholder="cliente@correo.com" value={email} onChange={e=>setEmail(e.target.value)}/></div>
+        </div>
+        {message&&<div className="secure-error">×&nbsp; {message}</div>}
+        <button className="secure-search" disabled={!platform||!email||loading}><Search size={16}/>{loading?'BUSCANDO...':'BUSCAR'}</button>
+        {result&&<div className="result secure-result"><small>CÓDIGO PARA {result.platform.toUpperCase()}</small><strong>{result.code}</strong><button type="button" onClick={copy}><Copy size={17}/>{copied?'Copiado':'Copiar código'}</button></div>}
+      </form>
+    </section>
+    <footer>© 2026 Huerta Digital · Acceso protegido</footer>
+  </main>
 }
 
 function Admin({onBack,loggedIn}:{onBack:()=>void;loggedIn:boolean}) {
