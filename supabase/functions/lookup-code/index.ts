@@ -13,7 +13,13 @@ Deno.serve(async(req)=>{
     const key=secretKeys.default||Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     const db=createClient(Deno.env.get('SUPABASE_URL')!,key!)
     const accessHash=await hashAccessCode(access)
-    const {data,error}=await db.from('code_assignments').select('id,code,platforms(name)').eq('customer_email',normalized).eq('platform_id',platform_id).eq('access_code_hash',accessHash).eq('status','available').order('created_at',{ascending:false}).limit(1).maybeSingle()
+    const {data:client,error:clientError}=await db.from('clients').select('id').eq('access_code_hash',accessHash).eq('status','active').maybeSingle()
+    if(clientError)throw clientError
+    if(!client)return Response.json({message:'Correo o código de acceso incorrecto.'},{status:404,headers:cors})
+    const {data:account,error:accountError}=await db.from('client_accounts').select('id').eq('client_id',client.id).eq('platform_id',platform_id).eq('account_email',normalized).eq('active',true).maybeSingle()
+    if(accountError)throw accountError
+    if(!account)return Response.json({message:'Correo o código de acceso incorrecto.'},{status:404,headers:cors})
+    const {data,error}=await db.from('code_assignments').select('id,code,platforms(name)').eq('client_id',client.id).eq('customer_email',normalized).eq('platform_id',platform_id).eq('status','available').order('created_at',{ascending:false}).limit(1).maybeSingle()
     if(error)throw error
     if(!data)return Response.json({message:'Correo o código de acceso incorrecto.'},{status:404,headers:cors})
     const viewed_at=new Date().toISOString()
