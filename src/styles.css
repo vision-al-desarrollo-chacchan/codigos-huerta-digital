@@ -22,6 +22,7 @@ background-size:240px 210px,310px 270px,210px 260px,360px 300px,auto}
 
 @media(min-width:801px){.form-grid{grid-template-columns:1.6fr 1fr 1fr 1fr auto}}
 .admin-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}.stack-form{display:grid;gap:14px}.stack-form .primary{margin-top:4px}.global-notice{margin:-6px 0 22px}.account-chip{display:block;width:max-content;max-width:420px;margin:3px 0;padding:4px 8px;border:1px solid #33445c;border-radius:6px;background:#111b29;color:#a9ddeb;font-size:11px}.badge.active{color:#82f3b2}
+.small-action{display:inline-flex;align-items:center;gap:6px;border:1px solid #41536d;border-radius:8px;background:#152033;color:#a9ddeb;padding:7px 9px;white-space:nowrap;cursor:pointer}.small-action:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:900px){.admin-columns{grid-template-columns:1fr}}
 
 /* Tema galaxia azul y morada */
