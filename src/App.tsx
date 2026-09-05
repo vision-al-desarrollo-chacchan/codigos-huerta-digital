@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { ChevronLeft, Copy, KeyRound, Link2, LogOut, Mail, Plus, Search, ShieldCheck, Tv, Users } from 'lucide-react'
+import { ChevronLeft, Check, Copy, KeyRound, Link2, LockKeyhole, LogOut, Mail, Plus, Search, ShieldCheck, Tv, Users } from 'lucide-react'
 import { configured, supabase } from './supabase'
 
 type Platform = { id: string; name: string }
@@ -8,6 +8,7 @@ type Client = { id:string; name:string; central_gmail:string; status:string; cre
 type ClientAccount = { id:string; client_id:string; platform_id:string; account_email:string; active:boolean; platforms:{name:string}|null }
 type GmailConnection = { client_id:string; google_email:string; status:string; connected_at:string; last_sync_at:string|null }
 const demoPlatforms: Platform[] = [{id:'netflix',name:'Netflix'},{id:'disney',name:'Disney+'},{id:'max',name:'Max'},{id:'prime',name:'Prime Video'},{id:'apple',name:'Apple TV+'}]
+const platformMarks:Record<string,string>={netflix:'N',disney:'Disney+',max:'max',prime:'prime',apple:'tv+'}
 async function hashAccessCode(value:string){const bytes=new TextEncoder().encode(value.trim());const digest=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
 
 export function App() {
@@ -30,18 +31,21 @@ function Lookup({onAdmin}:{onAdmin:()=>void}) {
   return <main className="shell secure-shell">
     <nav><div className="brand"><div className="brandmark"><Tv size={22}/></div><span>Huerta <b>Digital</b></span></div><button className="admin-link" onClick={onAdmin}><ShieldCheck size={17}/> Administrador</button></nav>
     <section className="secure-hero">
-      <div className="secure-pill"><span></span>MULTI-PLATAFORMA</div>
-      <h1>Web<br/><em>Segura</em></h1>
-      <p>Acceso seguro y automático a los códigos de verificación de las principales plataformas.</p>
+      <div className="secure-pill"><span></span>CONSULTA SEGURA</div>
+      <h1>Huerta <em>Streaming</em></h1>
+      <p>Selecciona tu plataforma e ingresa el correo y PIN personalizado que recibiste.</p>
       <form className="secure-card" onSubmit={submit}>
-        <h3><Search size={15}/> Consultar datos de acceso</h3>
+        <div className="service-heading"><small>PASO 1</small><h2>Elige tu plataforma</h2><p>Presiona el servicio que deseas consultar.</p></div>
+        <div className="service-grid" role="radiogroup" aria-label="Plataforma">
+          {demoPlatforms.map(p=><button type="button" role="radio" aria-checked={platform===p.id} className={`service-card ${p.id} ${platform===p.id?'selected':''}`} key={p.id} onClick={()=>{setPlatform(p.id);setResult(null);setMessage('')}}><span className="service-mark">{platformMarks[p.id]}</span><b>{p.name}</b>{platform===p.id&&<span className="service-check"><Check size={14}/></span>}</button>)}
+        </div>
+        <div className="query-heading"><span>PASO 2</span><h3><LockKeyhole size={16}/> Ingresa tus datos</h3></div>
         <div className="secure-fields">
-          <div><label>PLATAFORMA <b>*</b></label><select required value={platform} onChange={e=>setPlatform(e.target.value)}><option value="">Seleccionar</option>{demoPlatforms.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div><label>CORREO <b>*</b></label><input required type="email" placeholder="cliente@correo.com" value={email} onChange={e=>setEmail(e.target.value)}/></div>
-          <div><label>CÓDIGO DE ACCESO <b>*</b></label><input required minLength={4} maxLength={40} placeholder="Ej. Andrexx" value={access} onChange={e=>setAccess(e.target.value)}/></div>
+          <div><label>CORREO DE LA CUENTA <b>*</b></label><div className="secure-input"><Mail size={18}/><input required type="email" placeholder="cuenta@correo.com" value={email} onChange={e=>setEmail(e.target.value)}/></div></div>
+          <div><label>PIN PERSONALIZADO <b>*</b></label><div className="secure-input"><KeyRound size={18}/><input required minLength={4} maxLength={40} type="password" autoComplete="off" placeholder="Ingresa tu PIN" value={access} onChange={e=>setAccess(e.target.value)}/></div></div>
         </div>
         {message&&<div className="secure-error">×&nbsp; {message}</div>}
-        <button className="secure-search" disabled={!platform||!email||access.trim().length<4||loading}><Search size={16}/>{loading?'BUSCANDO...':'BUSCAR'}</button>
+        <button className="secure-search" disabled={!platform||!email||access.trim().length<4||loading}><Search size={16}/>{loading?'CONSULTANDO...':'CONSULTAR CÓDIGO'}</button>
         {result&&<div className="result secure-result"><small>CÓDIGO PARA {result.platform.toUpperCase()}</small><strong>{result.code}</strong><button type="button" onClick={copy}><Copy size={17}/>{copied?'Copiado':'Copiar código'}</button></div>}
       </form>
     </section>
