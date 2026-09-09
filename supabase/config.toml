@@ -1,2 +1,5 @@
 [functions.lookup-code]
 verify_jwt = false
+
+[functions.gmail-oauth-callback]
+verify_jwt = false
