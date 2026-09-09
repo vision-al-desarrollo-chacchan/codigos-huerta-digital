@@ -55,3 +55,26 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .secure-search{background:linear-gradient(90deg,#26089b,#255de8 48%,#280477);border:1px solid #6b5cff;color:#fff;box-shadow:inset 0 0 24px #438cff4d,0 0 20px #4434ff66}
 .secure-search:hover:not(:disabled){filter:brightness(1.16);box-shadow:inset 0 0 28px #56baff66,0 0 28px #5b54ff99}
 .secure-shell footer{background:#050a20c7;border-color:#5864a93d;color:#a8afcb}
+
+/* Mantiene los campos oscuros incluso con autocompletado de Chrome */
+.secure-card .secure-input input{
+  display:block;
+  flex:1 1 auto;
+  width:100%!important;
+  min-width:0!important;
+  color:#f3f7ff!important;
+  caret-color:#f3f7ff;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.secure-card .secure-input input:-webkit-autofill,
+.secure-card .secure-input input:-webkit-autofill:hover,
+.secure-card .secure-input input:-webkit-autofill:focus,
+.secure-card .secure-input input:-webkit-autofill:active{
+  -webkit-text-fill-color:#f3f7ff!important;
+  caret-color:#f3f7ff!important;
+  -webkit-box-shadow:0 0 0 1000px #171726 inset!important;
+  box-shadow:0 0 0 1000px #171726 inset!important;
+  border:0!important;
+  transition:background-color 9999s ease-out 0s;
+}
