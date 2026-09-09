@@ -22,7 +22,9 @@ export function App() {
 function Lookup({onAdmin}:{onAdmin:()=>void}) {
   const [email,setEmail]=useState(''); const [platform,setPlatform]=useState(''); const [access,setAccess]=useState(''); const [loading,setLoading]=useState(false)
   const [result,setResult]=useState<{code:string;platform:string;viewed_at:string}|null>(null); const [message,setMessage]=useState(''); const [copied,setCopied]=useState(false)
-  const submit=async(e:FormEvent)=>{e.preventDefault();setResult(null);setMessage('');setLoading(true)
+  const submit=async(e:FormEvent)=>{e.preventDefault();setResult(null);setMessage('')
+    if(!/^\S+@\S+\.\S+$/.test(email.trim())){setMessage('Ingresa un correo válido, por ejemplo: cuenta@gmail.com');return}
+    setLoading(true)
     if(!configured){setTimeout(()=>{setMessage('El sistema está listo para conectar con Supabase.');setLoading(false)},500);return}
     const {data,error}=await supabase.functions.invoke('lookup-code',{body:{email,platform_id:platform,access_code:access}}); setLoading(false)
     if(error||!data?.assignment){setMessage(data?.message||'Correo o datos de acceso incorrectos.');return} setResult(data.assignment)
@@ -34,7 +36,7 @@ function Lookup({onAdmin}:{onAdmin:()=>void}) {
       <div className="secure-pill"><span></span>CONSULTA SEGURA</div>
       <h1>Huerta <em>Streaming</em></h1>
       <p>Selecciona tu plataforma e ingresa el correo y PIN personalizado que recibiste.</p>
-      <form className="secure-card" onSubmit={submit}>
+      <form className="secure-card" onSubmit={submit} noValidate>
         <div className="service-heading"><small>PASO 1</small><h2>Elige tu plataforma</h2><p>Presiona el servicio que deseas consultar.</p></div>
         <div className="service-grid" role="radiogroup" aria-label="Plataforma">
           {demoPlatforms.map(p=><button type="button" role="radio" aria-checked={platform===p.id} className={`service-card ${p.id} ${platform===p.id?'selected':''}`} key={p.id} onClick={()=>{setPlatform(p.id);setResult(null);setMessage('')}}><span className="service-mark">{platformMarks[p.id]}</span><b>{p.name}</b>{platform===p.id&&<span className="service-check"><Check size={14}/></span>}</button>)}
