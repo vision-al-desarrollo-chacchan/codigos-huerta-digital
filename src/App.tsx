@@ -1,74 +1,792 @@
-import { FormEvent, useEffect, useState } from 'react'
-import { ChevronLeft, Check, Copy, KeyRound, Link2, LockKeyhole, LogOut, Mail, Plus, Search, ShieldCheck, Tv, Users } from 'lucide-react'
-import { configured, supabase } from './supabase'
+import { FormEvent, useEffect, useState } from "react";
+import {
+  ChevronLeft,
+  Check,
+  Copy,
+  KeyRound,
+  Link2,
+  LockKeyhole,
+  LogOut,
+  Mail,
+  Plus,
+  Search,
+  ShieldCheck,
+  Trash2,
+  Tv,
+  Users,
+} from "lucide-react";
+import { configured, supabase } from "./supabase";
 
-type Platform = { id: string; name: string }
-type Assignment = { id: string; customer_email: string; code: string; status: string; created_at: string; platforms: { name: string } | null }
-type Client = { id:string; name:string; central_gmail:string; status:string; created_at:string }
-type ClientAccount = { id:string; client_id:string; platform_id:string; account_email:string; active:boolean; platforms:{name:string}|null }
-type GmailConnection = { client_id:string; google_email:string; status:string; connected_at:string; last_sync_at:string|null }
-const demoPlatforms: Platform[] = [{id:'netflix',name:'Netflix'},{id:'disney',name:'Disney+'},{id:'max',name:'Max'},{id:'prime',name:'Prime Video'},{id:'apple',name:'Apple TV+'}]
-const platformMarks:Record<string,string>={netflix:'N',disney:'Disney+',max:'max',prime:'prime',apple:'tv+'}
-async function hashAccessCode(value:string){const bytes=new TextEncoder().encode(value.trim());const digest=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+type Platform = { id: string; name: string };
+type Assignment = {
+  id: string;
+  customer_email: string;
+  code: string;
+  status: string;
+  created_at: string;
+  platforms: { name: string } | null;
+};
+type Client = {
+  id: string;
+  name: string;
+  central_gmail: string;
+  status: string;
+  created_at: string;
+};
+type ClientAccount = {
+  id: string;
+  client_id: string;
+  platform_id: string;
+  account_email: string;
+  active: boolean;
+  platforms: { name: string } | null;
+};
+type GmailConnection = {
+  client_id: string;
+  google_email: string;
+  status: string;
+  connected_at: string;
+  last_sync_at: string | null;
+};
+const demoPlatforms: Platform[] = [
+  { id: "netflix", name: "Netflix" },
+  { id: "disney", name: "Disney+" },
+  { id: "max", name: "Max" },
+  { id: "prime", name: "Prime Video" },
+  { id: "apple", name: "Apple TV+" },
+];
+const platformMarks: Record<string, string> = {
+  netflix: "N",
+  disney: "Disney+",
+  max: "max",
+  prime: "prime",
+  apple: "tv+",
+};
+async function hashAccessCode(value: string) {
+  const bytes = new TextEncoder().encode(value.trim());
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 export function App() {
-  const [admin, setAdmin] = useState(false)
-  const [session, setSession] = useState(false)
-  useEffect(() => { if (!configured) return; supabase.auth.getSession().then(({data}) => setSession(Boolean(data.session))); return supabase.auth.onAuthStateChange((_e,s) => setSession(Boolean(s))).data.subscription.unsubscribe }, [])
-  if (admin) return <Admin onBack={() => setAdmin(false)} loggedIn={session} />
-  return <Lookup onAdmin={() => setAdmin(true)} />
+  const [admin, setAdmin] = useState(false);
+  const [session, setSession] = useState(false);
+  useEffect(() => {
+    if (!configured) return;
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(Boolean(data.session)));
+    return supabase.auth.onAuthStateChange((_e, s) => setSession(Boolean(s)))
+      .data.subscription.unsubscribe;
+  }, []);
+  if (admin) return <Admin onBack={() => setAdmin(false)} loggedIn={session} />;
+  return <Lookup onAdmin={() => setAdmin(true)} />;
 }
 
-function Lookup({onAdmin}:{onAdmin:()=>void}) {
-  const [email,setEmail]=useState(''); const [platform,setPlatform]=useState(''); const [access,setAccess]=useState(''); const [loading,setLoading]=useState(false)
-  const [result,setResult]=useState<{code:string;platform:string;viewed_at:string}|null>(null); const [message,setMessage]=useState(''); const [copied,setCopied]=useState(false)
-  const submit=async(e:FormEvent)=>{e.preventDefault();setResult(null);setMessage('')
-    if(!/^\S+@\S+\.\S+$/.test(email.trim())){setMessage('Ingresa un correo válido, por ejemplo: cuenta@gmail.com');return}
-    setLoading(true)
-    if(!configured){setTimeout(()=>{setMessage('El sistema está listo para conectar con Supabase.');setLoading(false)},500);return}
-    const {data,error}=await supabase.functions.invoke('lookup-code',{body:{email,platform_id:platform,access_code:access}}); setLoading(false)
-    if(error||!data?.assignment){setMessage(data?.message||'Correo o datos de acceso incorrectos.');return} setResult(data.assignment)
-  }
-  const copy=async()=>{if(!result)return;await navigator.clipboard.writeText(result.code);setCopied(true);setTimeout(()=>setCopied(false),1800)}
-  return <main className="shell secure-shell">
-    <nav><div className="brand"><div className="brandmark"><Tv size={22}/></div><span>Huerta <b>Digital</b></span></div><button className="admin-link" onClick={onAdmin}><ShieldCheck size={17}/> Administrador</button></nav>
-    <section className="secure-hero">
-      <div className="secure-pill"><span></span>CONSULTA SEGURA</div>
-      <h1>Huerta <em>Streaming</em></h1>
-      <p>Selecciona tu plataforma e ingresa el correo y PIN personalizado que recibiste.</p>
-      <form className="secure-card" onSubmit={submit} noValidate>
-        <div className="service-heading"><small>PASO 1</small><h2>Elige tu plataforma</h2><p>Presiona el servicio que deseas consultar.</p></div>
-        <div className="service-grid" role="radiogroup" aria-label="Plataforma">
-          {demoPlatforms.map(p=><button type="button" role="radio" aria-checked={platform===p.id} className={`service-card ${p.id} ${platform===p.id?'selected':''}`} key={p.id} onClick={()=>{setPlatform(p.id);setResult(null);setMessage('')}}><span className="service-mark">{platformMarks[p.id]}</span><b>{p.name}</b>{platform===p.id&&<span className="service-check"><Check size={14}/></span>}</button>)}
+function Lookup({ onAdmin }: { onAdmin: () => void }) {
+  const [email, setEmail] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [access, setAccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{
+    code: string;
+    platform: string;
+    viewed_at: string;
+  } | null>(null);
+  const [message, setMessage] = useState("");
+  const [copied, setCopied] = useState(false);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setResult(null);
+    setMessage("");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setMessage("Ingresa un correo válido, por ejemplo: cuenta@gmail.com");
+      return;
+    }
+    setLoading(true);
+    if (!configured) {
+      setTimeout(() => {
+        setMessage("El sistema está listo para conectar con Supabase.");
+        setLoading(false);
+      }, 500);
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke("lookup-code", {
+      body: { email, platform_id: platform, access_code: access },
+    });
+    setLoading(false);
+    if (error || !data?.assignment) {
+      setMessage(data?.message || "Correo o datos de acceso incorrectos.");
+      return;
+    }
+    setResult(data.assignment);
+  };
+  const copy = async () => {
+    if (!result) return;
+    await navigator.clipboard.writeText(result.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <main className="shell secure-shell">
+      <nav>
+        <div className="brand">
+          <div className="brandmark">
+            <Tv size={22} />
+          </div>
+          <span>
+            Huerta <b>Digital</b>
+          </span>
         </div>
-        <div className="query-heading"><span>PASO 2</span><h3><LockKeyhole size={16}/> Ingresa tus datos</h3></div>
-        <div className="secure-fields">
-          <div><label>CORREO DE LA CUENTA <b>*</b></label><div className="secure-input"><Mail size={18}/><input required type="email" placeholder="cuenta@correo.com" value={email} onChange={e=>setEmail(e.target.value)}/></div></div>
-          <div><label>PIN PERSONALIZADO <b>*</b></label><div className="secure-input"><KeyRound size={18}/><input required minLength={4} maxLength={40} type="password" autoComplete="off" placeholder="Ingresa tu PIN" value={access} onChange={e=>setAccess(e.target.value)}/></div></div>
+        <button className="admin-link" onClick={onAdmin}>
+          <ShieldCheck size={17} /> Administrador
+        </button>
+      </nav>
+      <section className="secure-hero">
+        <div className="secure-pill">
+          <span></span>CONSULTA SEGURA
         </div>
-        {message&&<div className="secure-error">×&nbsp; {message}</div>}
-        <button className="secure-search" disabled={!platform||!email||access.trim().length<4||loading}><Search size={16}/>{loading?'CONSULTANDO...':'CONSULTAR CÓDIGO'}</button>
-        {result&&<div className="result secure-result"><small>CÓDIGO PARA {result.platform.toUpperCase()}</small><strong>{result.code}</strong><button type="button" onClick={copy}><Copy size={17}/>{copied?'Copiado':'Copiar código'}</button></div>}
-      </form>
-    </section>
-    <footer>© 2026 Huerta Digital · Acceso protegido</footer>
-  </main>
+        <h1>
+          Huerta <em>Streaming</em>
+        </h1>
+        <p>
+          Selecciona tu plataforma e ingresa el correo y PIN personalizado que
+          recibiste.
+        </p>
+        <form className="secure-card" onSubmit={submit} noValidate>
+          <div className="service-heading">
+            <small>PASO 1</small>
+            <h2>Elige tu plataforma</h2>
+            <p>Presiona el servicio que deseas consultar.</p>
+          </div>
+          <div
+            className="service-grid"
+            role="radiogroup"
+            aria-label="Plataforma"
+          >
+            {demoPlatforms.map((p) => (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={platform === p.id}
+                className={`service-card ${p.id} ${platform === p.id ? "selected" : ""}`}
+                key={p.id}
+                onClick={() => {
+                  setPlatform(p.id);
+                  setResult(null);
+                  setMessage("");
+                }}
+              >
+                <span className="service-mark">{platformMarks[p.id]}</span>
+                <b>{p.name}</b>
+                {platform === p.id && (
+                  <span className="service-check">
+                    <Check size={14} />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="query-heading">
+            <span>PASO 2</span>
+            <h3>
+              <LockKeyhole size={16} /> Ingresa tus datos
+            </h3>
+          </div>
+          <div className="secure-fields">
+            <div>
+              <label>
+                CORREO DE LA CUENTA <b>*</b>
+              </label>
+              <div className="secure-input">
+                <Mail size={18} />
+                <input
+                  required
+                  type="email"
+                  placeholder="cuenta@correo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <label>
+                PIN PERSONALIZADO <b>*</b>
+              </label>
+              <div className="secure-input">
+                <KeyRound size={18} />
+                <input
+                  required
+                  minLength={4}
+                  maxLength={40}
+                  type="password"
+                  autoComplete="off"
+                  placeholder="Ingresa tu PIN"
+                  value={access}
+                  onChange={(e) => setAccess(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          {message && <div className="secure-error">×&nbsp; {message}</div>}
+          <button
+            className="secure-search"
+            disabled={
+              !platform || !email || access.trim().length < 4 || loading
+            }
+          >
+            <Search size={16} />
+            {loading ? "CONSULTANDO..." : "CONSULTAR CÓDIGO"}
+          </button>
+          {result && (
+            <div className="result secure-result">
+              <small>CÓDIGO PARA {result.platform.toUpperCase()}</small>
+              <strong>{result.code}</strong>
+              <button type="button" onClick={copy}>
+                <Copy size={17} />
+                {copied ? "Copiado" : "Copiar código"}
+              </button>
+            </div>
+          )}
+        </form>
+      </section>
+      <footer>© 2026 Huerta Digital · Acceso protegido</footer>
+    </main>
+  );
 }
 
-function Admin({onBack,loggedIn}:{onBack:()=>void;loggedIn:boolean}) {
-  const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [error,setError]=useState('');const [items,setItems]=useState<Assignment[]>([])
-  const [clients,setClients]=useState<Client[]>([]);const [accounts,setAccounts]=useState<ClientAccount[]>([]);const [view,setView]=useState<'clients'|'codes'>('clients')
-  const [gmailConnections,setGmailConnections]=useState<GmailConnection[]>([]);const [connectingGmail,setConnectingGmail]=useState('')
-  const [clientName,setClientName]=useState('');const [centralGmail,setCentralGmail]=useState('');const [clientAccess,setClientAccess]=useState('')
-  const [selectedClient,setSelectedClient]=useState('');const [accountEmail,setAccountEmail]=useState('');const [accountPlatform,setAccountPlatform]=useState('')
-  const [customer,setCustomer]=useState('');const [platform,setPlatform]=useState('');const [code,setCode]=useState('');const [saved,setSaved]=useState('')
-  const login=async(e:FormEvent)=>{e.preventDefault();setError('');if(!configured){setError('Falta conectar el proyecto de Supabase.');return}const {error}=await supabase.auth.signInWithPassword({email,password});if(error)setError('Correo o contraseña incorrectos.')}
-  const load=async()=>{const [{data:codes},{data:clientRows},{data:accountRows},{data:gmailRows}]=await Promise.all([supabase.from('code_assignments').select('id,customer_email,code,status,created_at,platforms(name)').order('created_at',{ascending:false}).limit(30),supabase.from('clients').select('id,name,central_gmail,status,created_at').order('created_at',{ascending:false}),supabase.from('client_accounts').select('id,client_id,platform_id,account_email,active,platforms(name)').order('created_at',{ascending:false}),supabase.from('gmail_connections').select('client_id,google_email,status,connected_at,last_sync_at')]);setItems((codes as unknown as Assignment[])||[]);setClients((clientRows as Client[])||[]);setAccounts((accountRows as unknown as ClientAccount[])||[]);setGmailConnections((gmailRows as GmailConnection[])||[])}
-  useEffect(()=>{if(loggedIn)load()},[loggedIn])
-  const addClient=async(e:FormEvent)=>{e.preventDefault();setSaved('');const access_code_hash=await hashAccessCode(clientAccess);const {error}=await supabase.from('clients').insert({name:clientName.trim(),central_gmail:centralGmail.trim().toLowerCase(),access_code_hash});if(error){setSaved('No se pudo crear el cliente: '+error.message);return}setClientName('');setCentralGmail('');setClientAccess('');setSaved('Cliente creado y separado correctamente.');load()}
-  const addAccount=async(e:FormEvent)=>{e.preventDefault();setSaved('');const {error}=await supabase.from('client_accounts').insert({client_id:selectedClient,platform_id:accountPlatform,account_email:accountEmail.trim().toLowerCase()});if(error){setSaved('No se pudo agregar la cuenta: '+error.message);return}setAccountEmail('');setAccountPlatform('');setSaved('Cuenta agregada al cliente.');load()}
-  const add=async(e:FormEvent)=>{e.preventDefault();setSaved('');const {error}=await supabase.from('code_assignments').insert({client_id:selectedClient,customer_email:customer.trim().toLowerCase(),platform_id:platform,code:code.trim()});if(error){setSaved('No se pudo guardar: '+error.message);return}setCustomer('');setCode('');setSaved('Código asignado correctamente.');load()}
-  const connectGmail=async(clientId:string)=>{setSaved('');setConnectingGmail(clientId);const {data,error}=await supabase.functions.invoke('gmail-oauth-start',{body:{client_id:clientId}});setConnectingGmail('');if(error||!data?.url){setSaved(data?.message||'No se pudo iniciar la conexión con Gmail.');return}window.location.assign(data.url)}
-  if(!loggedIn)return <main className="shell admin-shell"><button className="back" onClick={onBack}><ChevronLeft/> Volver a consulta</button><form className="card login" onSubmit={login}><div className="login-icon"><KeyRound/></div><h2>Panel administrador</h2><p>Ingresa con tu cuenta autorizada.</p><label>Correo</label><input required type="email" value={email} onChange={e=>setEmail(e.target.value)}/><label>Contraseña</label><input required type="password" value={password} onChange={e=>setPassword(e.target.value)}/><button className="primary">Ingresar</button>{error&&<div className="notice">{error}</div>}</form></main>
-  return <main className="dashboard"><header><div className="brand"><div className="brandmark"><Tv size={22}/></div><span>Huerta <b>Digital</b></span></div><button onClick={()=>supabase.auth.signOut()}><LogOut size={17}/>Salir</button></header><div className="dash-grid"><aside><button className={view==='clients'?'active':''} onClick={()=>setView('clients')}><Users/>Clientes</button><button className={view==='codes'?'active':''} onClick={()=>setView('codes')}><KeyRound/>Códigos</button><button onClick={onBack}><Search/>Consulta pública</button></aside><section>{view==='clients'?<><div className="title"><small>ADMINISTRACIÓN</small><h1>Clientes y correos centrales</h1></div><div className="admin-columns"><form className="card assignment" onSubmit={addClient}><h3><Users/>Crear cliente</h3><div className="stack-form"><div><label>Nombre del cliente</label><input required placeholder="Ej. Juan Pérez" value={clientName} onChange={e=>setClientName(e.target.value)}/></div><div><label>Gmail central</label><input required type="email" placeholder="codigosjuan@gmail.com" value={centralGmail} onChange={e=>setCentralGmail(e.target.value)}/></div><div><label>Código privado del cliente</label><input required minLength={4} maxLength={40} placeholder="Ej. STREAMXXX" value={clientAccess} onChange={e=>setClientAccess(e.target.value)}/></div><button className="primary"><Plus size={17}/>Crear cliente</button></div></form><form className="card assignment" onSubmit={addAccount}><h3><Mail/>Agregar cuenta de plataforma</h3><div className="stack-form"><div><label>Cliente</label><select required value={selectedClient} onChange={e=>setSelectedClient(e.target.value)}><option value="">Seleccionar cliente</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div><label>Plataforma</label><select required value={accountPlatform} onChange={e=>setAccountPlatform(e.target.value)}><option value="">Seleccionar</option>{demoPlatforms.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div><div><label>Correo de la cuenta</label><input required type="email" placeholder="cuentanetflix@gmail.com" value={accountEmail} onChange={e=>setAccountEmail(e.target.value)}/></div><button className="primary"><Plus size={17}/>Agregar cuenta</button></div></form></div>{saved&&<div className="notice global-notice">{saved}</div>}<div className="card table-card"><h3>Clientes registrados</h3><div className="table-wrap"><table><thead><tr><th>CLIENTE</th><th>GMAIL CENTRAL</th><th>CUENTAS</th><th>GMAIL</th><th>ESTADO</th></tr></thead><tbody>{clients.map(c=>{const gmail=gmailConnections.find(g=>g.client_id===c.id);return <tr key={c.id}><td>{c.name}</td><td>{c.central_gmail}</td><td>{accounts.filter(a=>a.client_id===c.id).map(a=><span className="account-chip" key={a.id}>{a.platforms?.name}: {a.account_email}</span>)}</td><td>{gmail?<span className="badge active">Conectado</span>:<button className="small-action" onClick={()=>connectGmail(c.id)} disabled={connectingGmail===c.id}><Link2 size={15}/>{connectingGmail===c.id?'Conectando...':'Conectar Gmail'}</button>}</td><td><span className={'badge '+c.status}>{c.status==='active'?'Activo':'Inactivo'}</span></td></tr>})}{!clients.length&&<tr><td colSpan={5} className="empty">Crea el primer cliente para comenzar.</td></tr>}</tbody></table></div></div></>:<><div className="title"><small>ADMINISTRACIÓN</small><h1>Gestión de códigos</h1></div><form className="card assignment" onSubmit={add}><h3><Plus/>Asignar código manual de respaldo</h3><div className="form-grid"><div><label>Cliente</label><select required value={selectedClient} onChange={e=>setSelectedClient(e.target.value)}><option value="">Seleccionar</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div><label>Correo de la cuenta</label><input required type="email" placeholder="cuenta@correo.com" value={customer} onChange={e=>setCustomer(e.target.value)}/></div><div><label>Plataforma</label><select required value={platform} onChange={e=>setPlatform(e.target.value)}><option value="">Seleccionar</option>{demoPlatforms.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div><div><label>Código recibido</label><input required placeholder="Ej. 839204" value={code} onChange={e=>setCode(e.target.value)}/></div><button className="primary">Guardar</button></div>{saved&&<div className="notice">{saved}</div>}</form><div className="card table-card"><h3>Códigos recientes</h3><div className="table-wrap"><table><thead><tr><th>CUENTA</th><th>PLATAFORMA</th><th>CÓDIGO</th><th>ESTADO</th><th>FECHA</th></tr></thead><tbody>{items.map(i=><tr key={i.id}><td>{i.customer_email}</td><td>{i.platforms?.name||'—'}</td><td className="mono">{i.code}</td><td><span className={'badge '+i.status}>{i.status}</span></td><td>{new Date(i.created_at).toLocaleString('es-PE')}</td></tr>)}{!items.length&&<tr><td colSpan={5} className="empty">Aún no hay códigos registrados.</td></tr>}</tbody></table></div></div></>}</section></div></main>
+function Admin({
+  onBack,
+  loggedIn,
+}: {
+  onBack: () => void;
+  loggedIn: boolean;
+}) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [items, setItems] = useState<Assignment[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [accounts, setAccounts] = useState<ClientAccount[]>([]);
+  const [view, setView] = useState<"clients" | "codes">("clients");
+  const [gmailConnections, setGmailConnections] = useState<GmailConnection[]>(
+    [],
+  );
+  const [connectingGmail, setConnectingGmail] = useState("");
+  const [deletingClient, setDeletingClient] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [centralGmail, setCentralGmail] = useState("");
+  const [clientAccess, setClientAccess] = useState("");
+  const [selectedClient, setSelectedClient] = useState("");
+  const [accountEmail, setAccountEmail] = useState("");
+  const [accountPlatform, setAccountPlatform] = useState("");
+  const [customer, setCustomer] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [code, setCode] = useState("");
+  const [saved, setSaved] = useState("");
+  const login = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!configured) {
+      setError("Falta conectar el proyecto de Supabase.");
+      return;
+    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) setError("Correo o contraseña incorrectos.");
+  };
+  const load = async () => {
+    const [
+      { data: codes },
+      { data: clientRows },
+      { data: accountRows },
+      { data: gmailRows },
+    ] = await Promise.all([
+      supabase
+        .from("code_assignments")
+        .select("id,customer_email,code,status,created_at,platforms(name)")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      supabase
+        .from("clients")
+        .select("id,name,central_gmail,status,created_at")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("client_accounts")
+        .select("id,client_id,platform_id,account_email,active,platforms(name)")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("gmail_connections")
+        .select("client_id,google_email,status,connected_at,last_sync_at"),
+    ]);
+    setItems((codes as unknown as Assignment[]) || []);
+    setClients((clientRows as Client[]) || []);
+    setAccounts((accountRows as unknown as ClientAccount[]) || []);
+    setGmailConnections((gmailRows as GmailConnection[]) || []);
+  };
+  useEffect(() => {
+    if (loggedIn) load();
+  }, [loggedIn]);
+  const addClient = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaved("");
+    const access_code_hash = await hashAccessCode(clientAccess);
+    const { error } = await supabase
+      .from("clients")
+      .insert({
+        name: clientName.trim(),
+        central_gmail: centralGmail.trim().toLowerCase(),
+        access_code_hash,
+      });
+    if (error) {
+      setSaved("No se pudo crear el cliente: " + error.message);
+      return;
+    }
+    setClientName("");
+    setCentralGmail("");
+    setClientAccess("");
+    setSaved("Cliente creado y separado correctamente.");
+    load();
+  };
+  const addAccount = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaved("");
+    const { error } = await supabase
+      .from("client_accounts")
+      .insert({
+        client_id: selectedClient,
+        platform_id: accountPlatform,
+        account_email: accountEmail.trim().toLowerCase(),
+      });
+    if (error) {
+      setSaved("No se pudo agregar la cuenta: " + error.message);
+      return;
+    }
+    setAccountEmail("");
+    setAccountPlatform("");
+    setSaved("Cuenta agregada al cliente.");
+    load();
+  };
+  const add = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaved("");
+    const { error } = await supabase
+      .from("code_assignments")
+      .insert({
+        client_id: selectedClient,
+        customer_email: customer.trim().toLowerCase(),
+        platform_id: platform,
+        code: code.trim(),
+      });
+    if (error) {
+      setSaved("No se pudo guardar: " + error.message);
+      return;
+    }
+    setCustomer("");
+    setCode("");
+    setSaved("Código asignado correctamente.");
+    load();
+  };
+  const connectGmail = async (clientId: string) => {
+    setSaved("");
+    setConnectingGmail(clientId);
+    const { data, error } = await supabase.functions.invoke(
+      "gmail-oauth-start",
+      { body: { client_id: clientId } },
+    );
+    setConnectingGmail("");
+    if (error || !data?.url) {
+      setSaved(data?.message || "No se pudo iniciar la conexión con Gmail.");
+      return;
+    }
+    window.location.assign(data.url);
+  };
+  const deleteClient = async (client: Client) => {
+    if (
+      !window.confirm(
+        `¿Eliminar a ${client.name}? También se eliminarán sus cuentas, conexión de Gmail y códigos.`,
+      )
+    )
+      return;
+    setSaved("");
+    setDeletingClient(client.id);
+    const { error } = await supabase
+      .from("clients")
+      .delete()
+      .eq("id", client.id);
+    setDeletingClient("");
+    if (error) {
+      setSaved("No se pudo eliminar el cliente: " + error.message);
+      return;
+    }
+    setSaved("Cliente eliminado correctamente.");
+    load();
+  };
+  if (!loggedIn)
+    return (
+      <main className="shell admin-shell">
+        <button className="back" onClick={onBack}>
+          <ChevronLeft /> Volver a consulta
+        </button>
+        <form className="card login" onSubmit={login}>
+          <div className="login-icon">
+            <KeyRound />
+          </div>
+          <h2>Panel administrador</h2>
+          <p>Ingresa con tu cuenta autorizada.</p>
+          <label>Correo</label>
+          <input
+            required
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <label>Contraseña</label>
+          <input
+            required
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button className="primary">Ingresar</button>
+          {error && <div className="notice">{error}</div>}
+        </form>
+      </main>
+    );
+  return (
+    <main className="dashboard">
+      <header>
+        <div className="brand">
+          <div className="brandmark">
+            <Tv size={22} />
+          </div>
+          <span>
+            Huerta <b>Digital</b>
+          </span>
+        </div>
+        <button onClick={() => supabase.auth.signOut()}>
+          <LogOut size={17} />
+          Salir
+        </button>
+      </header>
+      <div className="dash-grid">
+        <aside>
+          <button
+            className={view === "clients" ? "active" : ""}
+            onClick={() => setView("clients")}
+          >
+            <Users />
+            Clientes
+          </button>
+          <button
+            className={view === "codes" ? "active" : ""}
+            onClick={() => setView("codes")}
+          >
+            <KeyRound />
+            Códigos
+          </button>
+          <button onClick={onBack}>
+            <Search />
+            Consulta pública
+          </button>
+        </aside>
+        <section>
+          {view === "clients" ? (
+            <>
+              <div className="title">
+                <small>ADMINISTRACIÓN</small>
+                <h1>Clientes y correos centrales</h1>
+              </div>
+              <div className="admin-columns">
+                <form className="card assignment" onSubmit={addClient}>
+                  <h3>
+                    <Users />
+                    Crear cliente
+                  </h3>
+                  <div className="stack-form">
+                    <div>
+                      <label>Nombre del cliente</label>
+                      <input
+                        required
+                        placeholder="Ej. Juan Pérez"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label>Gmail central</label>
+                      <input
+                        required
+                        type="email"
+                        placeholder="codigosjuan@gmail.com"
+                        value={centralGmail}
+                        onChange={(e) => setCentralGmail(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label>Código privado del cliente</label>
+                      <input
+                        required
+                        minLength={4}
+                        maxLength={40}
+                        placeholder="Ej. STREAMXXX"
+                        value={clientAccess}
+                        onChange={(e) => setClientAccess(e.target.value)}
+                      />
+                    </div>
+                    <button className="primary">
+                      <Plus size={17} />
+                      Crear cliente
+                    </button>
+                  </div>
+                </form>
+                <form className="card assignment" onSubmit={addAccount}>
+                  <h3>
+                    <Mail />
+                    Agregar cuenta de plataforma
+                  </h3>
+                  <div className="stack-form">
+                    <div>
+                      <label>Cliente</label>
+                      <select
+                        required
+                        value={selectedClient}
+                        onChange={(e) => setSelectedClient(e.target.value)}
+                      >
+                        <option value="">Seleccionar cliente</option>
+                        {clients.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label>Plataforma</label>
+                      <select
+                        required
+                        value={accountPlatform}
+                        onChange={(e) => setAccountPlatform(e.target.value)}
+                      >
+                        <option value="">Seleccionar</option>
+                        {demoPlatforms.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label>Correo de la cuenta</label>
+                      <input
+                        required
+                        type="email"
+                        placeholder="cuentanetflix@gmail.com"
+                        value={accountEmail}
+                        onChange={(e) => setAccountEmail(e.target.value)}
+                      />
+                    </div>
+                    <button className="primary">
+                      <Plus size={17} />
+                      Agregar cuenta
+                    </button>
+                  </div>
+                </form>
+              </div>
+              {saved && <div className="notice global-notice">{saved}</div>}
+                  <div className="card table-card">
+                <h3>Clientes registrados</h3>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>CLIENTE</th>
+                        <th>GMAIL CENTRAL</th>
+                        <th>CUENTAS</th>
+                        <th>GMAIL</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clients.map((c) => {
+                        const gmail = gmailConnections.find(
+                          (g) => g.client_id === c.id,
+                        );
+                        return (
+                          <tr key={c.id}>
+                            <td>{c.name}</td>
+                            <td>{c.central_gmail}</td>
+                            <td>
+                              {accounts
+                                .filter((a) => a.client_id === c.id)
+                                .map((a) => (
+                                  <span className="account-chip" key={a.id}>
+                                    {a.platforms?.name}: {a.account_email}
+                                  </span>
+                                ))}
+                            </td>
+                            <td>
+                              {gmail ? (
+                                <span className="badge active">Conectado</span>
+                              ) : (
+                                <button
+                                  className="small-action"
+                                  onClick={() => connectGmail(c.id)}
+                                  disabled={connectingGmail === c.id}
+                                >
+                                  <Link2 size={15} />
+                                  {connectingGmail === c.id
+                                    ? "Conectando..."
+                                    : "Conectar Gmail"}
+                                </button>
+                              )}
+                            </td>
+                            <td>
+                              <span className={"badge " + c.status}>
+                                {c.status === "active" ? "Activo" : "Inactivo"}
+                              </span>
+                            </td>
+                            <td>
+                              <button
+                                className="danger-action"
+                                onClick={() => deleteClient(c)}
+                                disabled={deletingClient === c.id}
+                              >
+                                <Trash2 size={15} />
+                                {deletingClient === c.id
+                                  ? "Eliminando..."
+                                  : "Eliminar"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {!clients.length && (
+                        <tr>
+                          <td colSpan={6} className="empty">
+                            Crea el primer cliente para comenzar.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="title">
+                <small>ADMINISTRACIÓN</small>
+                <h1>Gestión de códigos</h1>
+              </div>
+              <form className="card assignment" onSubmit={add}>
+                <h3>
+                  <Plus />
+                  Asignar código manual de respaldo
+                </h3>
+                <div className="form-grid">
+                  <div>
+                    <label>Cliente</label>
+                    <select
+                      required
+                      value={selectedClient}
+                      onChange={(e) => setSelectedClient(e.target.value)}
+                    >
+                      <option value="">Seleccionar</option>
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label>Correo de la cuenta</label>
+                    <input
+                      required
+                      type="email"
+                      placeholder="cuenta@correo.com"
+                      value={customer}
+                      onChange={(e) => setCustomer(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label>Plataforma</label>
+                    <select
+                      required
+                      value={platform}
+                      onChange={(e) => setPlatform(e.target.value)}
+                    >
+                      <option value="">Seleccionar</option>
+                      {demoPlatforms.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label>Código recibido</label>
+                    <input
+                      required
+                      placeholder="Ej. 839204"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                    />
+                  </div>
+                  <button className="primary">Guardar</button>
+                </div>
+                {saved && <div className="notice">{saved}</div>}
+              </form>
+              <div className="card table-card">
+                <h3>Códigos recientes</h3>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>CUENTA</th>
+                        <th>PLATAFORMA</th>
+                        <th>CÓDIGO</th>
+                        <th>ESTADO</th>
+                        <th>FECHA</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((i) => (
+                        <tr key={i.id}>
+                          <td>{i.customer_email}</td>
+                          <td>{i.platforms?.name || "—"}</td>
+                          <td className="mono">{i.code}</td>
+                          <td>
+                            <span className={"badge " + i.status}>
+                              {i.status}
+                            </span>
+                          </td>
+                          <td>
+                            {new Date(i.created_at).toLocaleString("es-PE")}
+                          </td>
+                        </tr>
+                      ))}
+                      {!items.length && (
+                        <tr>
+                          <td colSpan={5} className="empty">
+                            Aún no hay códigos registrados.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    </main>
+  );
 }
