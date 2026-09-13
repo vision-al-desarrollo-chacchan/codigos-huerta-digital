@@ -11,6 +11,7 @@ import {
   Plus,
   Search,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Tv,
   Users,
@@ -145,21 +146,25 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
         </button>
       </nav>
       <section className="secure-hero">
-        <div className="secure-pill">
-          <span></span>CONSULTA SEGURA
+        <div className="experience-intro">
+          <div className="secure-pill"><span></span>SERVICIO ACTIVO</div>
+          <h1>Tu código,<br/><em>cuando lo necesitas.</em></h1>
+          <p>Accede de forma rápida y segura a los códigos de tus plataformas asignadas.</p>
+          <div className="intro-features">
+            <div><ShieldCheck size={19}/><span><b>Acceso protegido</b><small>Solo tú puedes consultar</small></span></div>
+            <div><Sparkles size={19}/><span><b>Respuesta inmediata</b><small>El código más reciente</small></span></div>
+          </div>
+          <div className="brand-signature">HUERTA DIGITAL <span>•</span> STREAMING</div>
         </div>
-        <h1>
-          Huerta <em>Streaming</em>
-        </h1>
-        <p>
-          Selecciona tu plataforma e ingresa el correo y PIN personalizado que
-          recibiste.
-        </p>
         <form className="secure-card" onSubmit={submit} noValidate>
+          <div className="card-topline">
+            <span>Centro de códigos</span>
+            <span className="live-status"><i></i> En línea</span>
+          </div>
           <div className="service-heading">
-            <small>PASO 1</small>
-            <h2>Elige tu plataforma</h2>
-            <p>Presiona el servicio que deseas consultar.</p>
+            <small>PASO 01</small>
+            <h2>¿Qué plataforma necesitas?</h2>
+            <p>Selecciona uno de tus servicios disponibles.</p>
           </div>
           <div
             className="service-grid"
@@ -190,7 +195,7 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
             ))}
           </div>
           <div className="query-heading">
-            <span>PASO 2</span>
+            <span>PASO 02</span>
             <h3>
               <LockKeyhole size={16} /> Ingresa tus datos
             </h3>
@@ -238,7 +243,7 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
             }
           >
             <Search size={16} />
-            {loading ? "CONSULTANDO..." : "CONSULTAR CÓDIGO"}
+              {loading ? "BUSCANDO TU CÓDIGO..." : "OBTENER MI CÓDIGO"}
           </button>
           {result && (
             <div className="result secure-result">
