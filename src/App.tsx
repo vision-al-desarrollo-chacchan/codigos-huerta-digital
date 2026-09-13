@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
-  Tv,
   Users,
 } from "lucide-react";
 import { configured, supabase } from "./supabase";
@@ -135,11 +134,9 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
       <nav>
         <div className="brand">
           <div className="brandmark">
-            <Tv size={22} />
+            <span className="hd-monogram">H</span><i></i>
           </div>
-          <span>
-            Huerta <b>Digital</b>
-          </span>
+          <span className="brand-name">Huerta <b>Digital</b><small>CENTRO DE CÓDIGOS</small></span>
         </div>
         <button className="admin-link" onClick={onAdmin}>
           <ShieldCheck size={17} /> Administrador
@@ -467,11 +464,9 @@ function Admin({
       <header>
         <div className="brand">
           <div className="brandmark">
-            <Tv size={22} />
+            <span className="hd-monogram">H</span><i></i>
           </div>
-          <span>
-            Huerta <b>Digital</b>
-          </span>
+          <span className="brand-name">Huerta <b>Digital</b><small>ADMINISTRACIÓN</small></span>
         </div>
         <button onClick={() => supabase.auth.signOut()}>
           <LogOut size={17} />
