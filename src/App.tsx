@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   Check,
   Copy,
+  Download,
   KeyRound,
   Link2,
   LockKeyhole,
@@ -62,6 +63,56 @@ const platformMarks: Record<string, string> = {
   prime: "prime",
   apple: "tv+",
 };
+
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
+function InstallButton() {
+  const [promptEvent, setPromptEvent] = useState<InstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(
+    () => window.matchMedia("(display-mode: standalone)").matches,
+  );
+
+  useEffect(() => {
+    const capturePrompt = (event: Event) => {
+      event.preventDefault();
+      setPromptEvent(event as InstallPromptEvent);
+    };
+    const markInstalled = () => setInstalled(true);
+    window.addEventListener("beforeinstallprompt", capturePrompt);
+    window.addEventListener("appinstalled", markInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", capturePrompt);
+      window.removeEventListener("appinstalled", markInstalled);
+    };
+  }, []);
+
+  if (installed) return null;
+
+  const install = async () => {
+    if (promptEvent) {
+      await promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+      if (choice.outcome === "accepted") setInstalled(true);
+      setPromptEvent(null);
+      return;
+    }
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    window.alert(
+      isIOS
+        ? "En Safari, pulsa Compartir y luego Añadir a pantalla de inicio."
+        : "Abre el menú del navegador y selecciona Instalar aplicación o Añadir a pantalla de inicio.",
+    );
+  };
+
+  return (
+    <button type="button" className="install-app" onClick={install}>
+      <Download size={17} /> <span>Instalar app</span>
+    </button>
+  );
+}
 async function hashAccessCode(value: string) {
   const bytes = new TextEncoder().encode(value.trim());
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -138,9 +189,12 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
           </div>
           <span className="brand-name">Huerta <b>Digital</b><small>CENTRO DE CÓDIGOS</small></span>
         </div>
-        <button className="admin-link" onClick={onAdmin}>
-          <ShieldCheck size={17} /> Administrador
-        </button>
+        <div className="nav-actions">
+          <InstallButton />
+          <button className="admin-link" onClick={onAdmin}>
+            <ShieldCheck size={17} /> Administrador
+          </button>
+        </div>
       </nav>
       <section className="secure-hero">
         <div className="experience-intro">
