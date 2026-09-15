@@ -320,6 +320,7 @@ function Admin({
   const [accounts, setAccounts] = useState<ClientAccount[]>([]);
   const [view, setView] = useState<"clients" | "codes">("clients");
   const [deletingClient, setDeletingClient] = useState("");
+  const [changingPin, setChangingPin] = useState("");
   const [clientName, setClientName] = useState("");
   const [centralGmail, setCentralGmail] = useState("");
   const [clientAccess, setClientAccess] = useState("");
@@ -450,6 +451,35 @@ function Admin({
     }
     setSaved("Cliente eliminado correctamente.");
     load();
+  };
+  const changeClientPin = async (client: Client) => {
+    const newPin = window.prompt(
+      `Escribe el nuevo PIN privado para ${client.name}:`,
+    );
+    if (newPin === null) return;
+    const cleanPin = newPin.trim();
+    if (cleanPin.length < 4 || cleanPin.length > 40) {
+      setSaved("El PIN debe tener entre 4 y 40 caracteres.");
+      return;
+    }
+    const confirmation = window.prompt("Repite el nuevo PIN:");
+    if (confirmation === null) return;
+    if (confirmation.trim() !== cleanPin) {
+      setSaved("Los PIN ingresados no coinciden.");
+      return;
+    }
+    setSaved("");
+    setChangingPin(client.id);
+    const { error } = await supabase
+      .from("clients")
+      .update({ access_code_hash: await hashAccessCode(cleanPin) })
+      .eq("id", client.id);
+    setChangingPin("");
+    if (error) {
+      setSaved("No se pudo cambiar el PIN: " + error.message);
+      return;
+    }
+    setSaved(`PIN de ${client.name} actualizado correctamente.`);
   };
   if (!loggedIn)
     return (
@@ -655,6 +685,16 @@ function Admin({
                               </span>
                             </td>
                             <td>
+                              <button
+                                className="small-action"
+                                onClick={() => changeClientPin(c)}
+                                disabled={changingPin === c.id}
+                              >
+                                <KeyRound size={15} />
+                                {changingPin === c.id
+                                  ? "Guardando..."
+                                  : "Cambiar PIN"}
+                              </button>
                               <button
                                 className="danger-action"
                                 onClick={() => deleteClient(c)}
