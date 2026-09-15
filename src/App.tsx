@@ -5,7 +5,6 @@ import {
   Copy,
   Download,
   KeyRound,
-  Link2,
   LockKeyhole,
   LogOut,
   Mail,
@@ -41,13 +40,6 @@ type ClientAccount = {
   account_email: string;
   active: boolean;
   platforms: { name: string } | null;
-};
-type GmailConnection = {
-  client_id: string;
-  google_email: string;
-  status: string;
-  connected_at: string;
-  last_sync_at: string | null;
 };
 const demoPlatforms: Platform[] = [
   { id: "netflix", name: "Netflix" },
@@ -327,10 +319,6 @@ function Admin({
   const [clients, setClients] = useState<Client[]>([]);
   const [accounts, setAccounts] = useState<ClientAccount[]>([]);
   const [view, setView] = useState<"clients" | "codes">("clients");
-  const [gmailConnections, setGmailConnections] = useState<GmailConnection[]>(
-    [],
-  );
-  const [connectingGmail, setConnectingGmail] = useState("");
   const [deletingClient, setDeletingClient] = useState("");
   const [clientName, setClientName] = useState("");
   const [centralGmail, setCentralGmail] = useState("");
@@ -360,7 +348,6 @@ function Admin({
       { data: codes },
       { data: clientRows },
       { data: accountRows },
-      { data: gmailRows },
     ] = await Promise.all([
       supabase
         .from("code_assignments")
@@ -375,14 +362,10 @@ function Admin({
         .from("client_accounts")
         .select("id,client_id,platform_id,account_email,active,platforms(name)")
         .order("created_at", { ascending: false }),
-      supabase
-        .from("gmail_connections")
-        .select("client_id,google_email,status,connected_at,last_sync_at"),
     ]);
     setItems((codes as unknown as Assignment[]) || []);
     setClients((clientRows as Client[]) || []);
     setAccounts((accountRows as unknown as ClientAccount[]) || []);
-    setGmailConnections((gmailRows as GmailConnection[]) || []);
   };
   useEffect(() => {
     if (loggedIn) load();
@@ -447,24 +430,10 @@ function Admin({
     setSaved("Código asignado correctamente.");
     load();
   };
-  const connectGmail = async (clientId: string) => {
-    setSaved("");
-    setConnectingGmail(clientId);
-    const { data, error } = await supabase.functions.invoke(
-      "gmail-oauth-start",
-      { body: { client_id: clientId } },
-    );
-    setConnectingGmail("");
-    if (error || !data?.url) {
-      setSaved(data?.message || "No se pudo iniciar la conexión con Gmail.");
-      return;
-    }
-    window.location.assign(data.url);
-  };
   const deleteClient = async (client: Client) => {
     if (
       !window.confirm(
-        `¿Eliminar a ${client.name}? También se eliminarán sus cuentas, conexión de Gmail y códigos.`,
+        `¿Eliminar a ${client.name}? También se eliminarán sus cuentas y códigos.`,
       )
     )
       return;
@@ -661,16 +630,12 @@ function Admin({
                         <th>CLIENTE</th>
                         <th>GMAIL CENTRAL</th>
                         <th>CUENTAS</th>
-                        <th>GMAIL</th>
                         <th>ESTADO</th>
                         <th>ACCIONES</th>
                       </tr>
                     </thead>
                     <tbody>
                       {clients.map((c) => {
-                        const gmail = gmailConnections.find(
-                          (g) => g.client_id === c.id,
-                        );
                         return (
                           <tr key={c.id}>
                             <td>{c.name}</td>
@@ -683,22 +648,6 @@ function Admin({
                                     {a.platforms?.name}: {a.account_email}
                                   </span>
                                 ))}
-                            </td>
-                            <td>
-                              {gmail ? (
-                                <span className="badge active">Conectado</span>
-                              ) : (
-                                <button
-                                  className="small-action"
-                                  onClick={() => connectGmail(c.id)}
-                                  disabled={connectingGmail === c.id}
-                                >
-                                  <Link2 size={15} />
-                                  {connectingGmail === c.id
-                                    ? "Conectando..."
-                                    : "Conectar Gmail"}
-                                </button>
-                              )}
                             </td>
                             <td>
                               <span className={"badge " + c.status}>
