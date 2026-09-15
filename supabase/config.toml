@@ -1,5 +1,8 @@
 [functions.lookup-code]
 verify_jwt = false
 
+[functions.admin-change-pin]
+verify_jwt = true
+
 [functions.gmail-oauth-callback]
 verify_jwt = false
