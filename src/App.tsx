@@ -470,13 +470,19 @@ function Admin({
     }
     setSaved("");
     setChangingPin(client.id);
-    const { error } = await supabase
+    const { data: updatedClient, error } = await supabase
       .from("clients")
       .update({ access_code_hash: await hashAccessCode(cleanPin) })
-      .eq("id", client.id);
+      .eq("id", client.id)
+      .select("id")
+      .maybeSingle();
     setChangingPin("");
     if (error) {
       setSaved("No se pudo cambiar el PIN: " + error.message);
+      return;
+    }
+    if (!updatedClient) {
+      setSaved("El PIN no se guardó. Cierra sesión, vuelve a ingresar como administrador e inténtalo otra vez.");
       return;
     }
     setSaved(`PIN de ${client.name} actualizado correctamente.`);
