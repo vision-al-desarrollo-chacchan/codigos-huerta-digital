@@ -156,15 +156,31 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
       }, 500);
       return;
     }
+    try {
     const { data, error } = await supabase.functions.invoke("lookup-code", {
       body: { email, platform_id: platform, access_code: access },
     });
     setLoading(false);
     if (error || !data?.assignment) {
-      setMessage(data?.message || "Correo o datos de acceso incorrectos.");
+      let detail = typeof data?.message === "string" ? data.message : "";
+      const response = error?.context;
+      if (response instanceof Response) {
+        try {
+          const payload = await response.clone().json();
+          if (typeof payload?.message === "string") detail = payload.message;
+        } catch { /* Keep a safe fallback for non-JSON responses. */ }
+        setMessage(`Consulta (${response.status}): ${detail || "El servidor no pudo completar la consulta."}`);
+      } else {
+        setMessage(detail || "No se pudo conectar con el servicio de códigos. Intenta nuevamente.");
+      }
       return;
     }
     setResult(data.assignment);
+    } catch {
+      setMessage("No se pudo conectar con el servicio de códigos. Intenta nuevamente.");
+    } finally {
+      setLoading(false);
+    }
   };
   const copy = async () => {
     if (!result) return;
