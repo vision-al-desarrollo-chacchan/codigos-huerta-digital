@@ -16,11 +16,11 @@ function doPost(e) {
     const plataforma = PLATFORMAS[plataformaId];
     if (!/^\S+@\S+\.\S+$/.test(correo) || !plataforma) return respuesta({ ok: false, message: 'Correo o plataforma inválidos.' });
     const consulta = plataformaId === 'netflix'
-      ? '(from:(netflix.com) OR subject:"Tu código de acceso temporal") newer_than:1d'
+      ? '(from:(netflix.com) OR subject:"Tu código de acceso temporal" OR subject:"Importante: Cómo cambiar tu hogar Netflix") newer_than:1d'
       : plataforma.consulta + ' newer_than:1d';
     const hilos = GmailApp.search(consulta, 0, 50);
     const mensajes = [];
-    const accesosNetflixSinCuentaVisible = [];
+    const accionesNetflixSinCuentaVisible = [];
     let encontroCorreoNetflix = false;
     hilos.forEach(function (hilo) { hilo.getMessages().forEach(function (mensaje) { mensajes.push(mensaje); }); });
     mensajes.sort(function (a, b) { return b.getDate().getTime() - a.getDate().getTime(); });
@@ -40,28 +40,34 @@ function doPost(e) {
       const texto = asunto + '\n' + cuerpoPlano + '\n' + limpiarHtml(cuerpoHtml);
       if (/restablecer|recuperar|contraseña|password reset|factura|pago|promoción|oferta|profile has been updated|perfil ha sido actualizado/i.test(texto)) continue;
       const esAccesoTemporalNetflix = plataformaId === 'netflix' && /tu c[oó]digo de acceso temporal/i.test(asunto + '\n' + texto);
-      if (esAccesoTemporalNetflix) encontroCorreoNetflix = true;
+      const esCambioHogarNetflix = plataformaId === 'netflix' && /(?:importante:\s*)?c[oó]mo cambiar tu hogar Netflix|cambiemos tu hogar Netflix/i.test(asunto + '\n' + texto);
+      if (esAccesoTemporalNetflix || esCambioHogarNetflix) encontroCorreoNetflix = true;
       if (!referenciaCuenta.includes(correo)) {
         // Algunos reenvíos de Netflix eliminan el destinatario original. Solo se
         // admite el respaldo si existe una única solicitud muy reciente, evitando
         // entregar el enlace equivocado cuando hay varias solicitudes simultáneas.
-        if (esAccesoTemporalNetflix && Date.now() - mensaje.getDate().getTime() <= 10 * 60 * 1000) {
-          const enlaceRespaldo = extraerEnlaceNetflix(cuerpoHtml);
-          if (enlaceRespaldo) accesosNetflixSinCuentaVisible.push({ enlace: enlaceRespaldo, id: mensaje.getId() });
+        if ((esAccesoTemporalNetflix || esCambioHogarNetflix) && Date.now() - mensaje.getDate().getTime() <= 10 * 60 * 1000) {
+          const tipoRespaldo = esCambioHogarNetflix ? 'household' : 'temporary_access';
+          const enlaceRespaldo = extraerEnlaceNetflix(cuerpoHtml, tipoRespaldo);
+          if (enlaceRespaldo) accionesNetflixSinCuentaVisible.push({ enlace: enlaceRespaldo, id: mensaje.getId(), tipo: tipoRespaldo });
         }
         continue;
       }
+      if (esAccesoTemporalNetflix) {
+        const enlace = extraerEnlaceNetflix(cuerpoHtml, 'temporary_access');
+        if (enlace) return respuesta({ ok: true, actionUrl: enlace, actionType: 'temporary_access', messageId: mensaje.getId(), platform: plataforma.nombre });
+      }
+      if (esCambioHogarNetflix) {
+        const enlaceHogar = extraerEnlaceNetflix(cuerpoHtml, 'household');
+        if (enlaceHogar) return respuesta({ ok: true, actionUrl: enlaceHogar, actionType: 'household', messageId: mensaje.getId(), platform: plataforma.nombre });
+      }
       const codigo = extraerCodigo(texto, plataformaId);
       if (codigo) return respuesta({ ok: true, code: codigo, messageId: mensaje.getId(), platform: plataforma.nombre });
-      if (esAccesoTemporalNetflix) {
-        const enlace = extraerEnlaceNetflix(cuerpoHtml);
-        if (enlace) return respuesta({ ok: true, actionUrl: enlace, messageId: mensaje.getId(), platform: plataforma.nombre });
-      }
     }
-    if (accesosNetflixSinCuentaVisible.length === 1) {
-      return respuesta({ ok: true, actionUrl: accesosNetflixSinCuentaVisible[0].enlace, messageId: accesosNetflixSinCuentaVisible[0].id, platform: plataforma.nombre });
+    if (accionesNetflixSinCuentaVisible.length === 1) {
+      return respuesta({ ok: true, actionUrl: accionesNetflixSinCuentaVisible[0].enlace, actionType: accionesNetflixSinCuentaVisible[0].tipo, messageId: accionesNetflixSinCuentaVisible[0].id, platform: plataforma.nombre });
     }
-    if (accesosNetflixSinCuentaVisible.length > 1) {
+    if (accionesNetflixSinCuentaVisible.length > 1) {
       return respuesta({ ok: false, message: 'Encontramos varias solicitudes recientes de Netflix. Solicita un código nuevo y vuelve a intentar.' });
     }
     if (encontroCorreoNetflix) {
@@ -73,12 +79,15 @@ function doPost(e) {
   }
 }
 
-function extraerEnlaceNetflix(html) {
+function extraerEnlaceNetflix(html, tipo) {
   const contenido = String(html || '');
   const enlaces = contenido.match(/<a\b[^>]*href\s*=\s*["'][^"']+["'][^>]*>[\s\S]*?<\/a>/gi) || [];
   for (let i = 0; i < enlaces.length; i++) {
     const etiqueta = limpiarHtml(enlaces[i]);
-    if (!/obtener c[oó]digo/i.test(etiqueta)) continue;
+    const etiquetaValida = tipo === 'household'
+      ? /s[ií],?\s*lo solicit[eé] yo/i.test(etiqueta)
+      : /obtener c[oó]digo/i.test(etiqueta);
+    if (!etiquetaValida) continue;
     const coincidencia = enlaces[i].match(/href\s*=\s*["']([^"']+)["']/i);
     if (!coincidencia) continue;
     const enlace = decodificarHtml(coincidencia[1]);
