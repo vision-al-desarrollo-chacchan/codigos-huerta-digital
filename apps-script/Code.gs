@@ -35,10 +35,46 @@ function doPost(e) {
       if (/restablecer|recuperar|contraseña|password reset|factura|pago|promoción|oferta|profile has been updated|perfil ha sido actualizado/i.test(texto)) continue;
       const codigo = extraerCodigo(texto, plataformaId);
       if (codigo) return respuesta({ ok: true, code: codigo, messageId: mensaje.getId(), platform: plataforma.nombre });
+      if (plataformaId === 'netflix' && /tu c[oó]digo de acceso temporal/i.test(asunto + '\n' + texto)) {
+        const enlace = extraerEnlaceNetflix(cuerpoHtml);
+        if (enlace) return respuesta({ ok: true, actionUrl: enlace, messageId: mensaje.getId(), platform: plataforma.nombre });
+      }
     }
     return respuesta({ ok: false, message: 'No encontramos un código reciente para esa cuenta.' });
   } catch (error) {
     return respuesta({ ok: false, message: 'No se pudo consultar Gmail.' });
+  }
+}
+
+function extraerEnlaceNetflix(html) {
+  const contenido = String(html || '');
+  const enlaces = contenido.match(/<a\b[^>]*href\s*=\s*["'][^"']+["'][^>]*>[\s\S]*?<\/a>/gi) || [];
+  for (let i = 0; i < enlaces.length; i++) {
+    const etiqueta = limpiarHtml(enlaces[i]);
+    if (!/obtener c[oó]digo/i.test(etiqueta)) continue;
+    const coincidencia = enlaces[i].match(/href\s*=\s*["']([^"']+)["']/i);
+    if (!coincidencia) continue;
+    const enlace = decodificarHtml(coincidencia[1]);
+    if (esEnlaceNetflixSeguro(enlace)) return enlace;
+  }
+  return '';
+}
+
+function decodificarHtml(valor) {
+  return String(valor || '')
+    .replace(/&amp;/gi, '&')
+    .replace(/&#38;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
+function esEnlaceNetflixSeguro(valor) {
+  try {
+    const url = new URL(valor);
+    const host = url.hostname.toLowerCase();
+    return url.protocol === 'https:' && (host === 'netflix.com' || host.endsWith('.netflix.com'));
+  } catch (error) {
+    return false;
   }
 }
 
