@@ -13,7 +13,7 @@ function isSafeNetflixUrl(value:string){
 async function requestCode(email:string,platform:string){
   const url=Deno.env.get('APPS_SCRIPT_URL');const token=Deno.env.get('APPS_SCRIPT_TOKEN')
   if(!url||!token)throw new Error('Apps Script no está configurado')
-  const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,platform,token}),redirect:'follow'})
+  const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,platform,token}),redirect:'follow',signal:AbortSignal.timeout(12000)})
   const result=await response.json() as ScriptResult
   if(!response.ok||!result.ok||!result.messageId)return {found:null,message:result.message||'No encontramos un código reciente.'}
   if(result.actionUrl){
