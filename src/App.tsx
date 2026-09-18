@@ -4,6 +4,7 @@ import {
   Check,
   Copy,
   Download,
+  ExternalLink,
   KeyRound,
   LockKeyhole,
   LogOut,
@@ -134,7 +135,9 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
   const [access, setAccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
-    code: string;
+    type?: "code" | "action";
+    code?: string;
+    action_url?: string;
     platform: string;
     viewed_at: string;
   } | null>(null);
@@ -183,7 +186,7 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
     }
   };
   const copy = async () => {
-    if (!result) return;
+    if (!result?.code) return;
     await navigator.clipboard.writeText(result.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
@@ -306,12 +309,25 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
           </button>
           {result && (
             <div className="result secure-result">
-              <small>CÓDIGO PARA {result.platform.toUpperCase()}</small>
-              <strong>{result.code}</strong>
-              <button type="button" onClick={copy}>
-                <Copy size={17} />
-                {copied ? "Copiado" : "Copiar código"}
-              </button>
+              {result.type === "action" && result.action_url ? (
+                <>
+                  <small>SOLICITUD DE ACCESO TEMPORAL</small>
+                  <strong className="action-title">Netflix recibió tu solicitud</strong>
+                  <p>Abre Netflix y pulsa “Obtener código”. El enlace es privado y temporal.</p>
+                  <a className="action-link" href={result.action_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink size={17} /> Abrir solicitud de Netflix
+                  </a>
+                </>
+              ) : (
+                <>
+                  <small>CÓDIGO PARA {result.platform.toUpperCase()}</small>
+                  <strong>{result.code}</strong>
+                  <button type="button" onClick={copy}>
+                    <Copy size={17} />
+                    {copied ? "Copiado" : "Copiar código"}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </form>
