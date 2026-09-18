@@ -4,7 +4,7 @@ const cors = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'
 const validPlatforms = new Set(['netflix','disney','max','prime','apple'])
 const json=(body:unknown,status=200)=>Response.json(body,{status,headers:{...cors,'Content-Type':'application/json'}})
 const hash=async(value:string)=>{const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value.trim()));return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
-type ScriptResult={ok?:boolean;code?:string;actionUrl?:string;messageId?:string;message?:string;platform?:string}
+type ScriptResult={ok?:boolean;code?:string;actionUrl?:string;actionType?:'temporary_access'|'household';messageId?:string;message?:string;platform?:string}
 
 function isSafeNetflixUrl(value:string){
   try{const url=new URL(value);return url.protocol==='https:'&&(url.hostname==='netflix.com'||url.hostname.endsWith('.netflix.com'))}catch{return false}
@@ -18,7 +18,7 @@ async function requestCode(email:string,platform:string){
   if(!response.ok||!result.ok||!result.messageId)return {found:null,message:result.message||'No encontramos un código reciente.'}
   if(result.actionUrl){
     if(platform!=='netflix'||!isSafeNetflixUrl(result.actionUrl))throw new Error('Enlace inválido recibido')
-    return {found:{kind:'action' as const,actionUrl:result.actionUrl,messageId:result.messageId},message:''}
+    return {found:{kind:'action' as const,actionUrl:result.actionUrl,actionType:result.actionType==='household'?'household' as const:'temporary_access' as const,messageId:result.messageId},message:''}
   }
   if(!result.code||!/^(?:\d{4}|\d{6})$/.test(result.code))throw new Error('Código inválido recibido')
   return {found:{kind:'code' as const,code:result.code,messageId:result.messageId},message:''}
@@ -36,7 +36,7 @@ Deno.serve(async(req)=>{
     const {data:account,error:accountError}=await db.from('client_accounts').select('id').eq('client_id',client.id).eq('platform_id',platform).eq('account_email',normalized).eq('active',true).maybeSingle();if(accountError)throw accountError
     if(!account)return json({message:'Correo o código de acceso incorrecto.'},404)
     const {found,message}=await requestCode(normalized,platform);if(!found)return json({message},404)
-    if(found.kind==='action')return json({assignment:{type:'action',action_url:found.actionUrl,platform:'Netflix',viewed_at:new Date().toISOString()}})
+    if(found.kind==='action')return json({assignment:{type:'action',action_url:found.actionUrl,action_kind:found.actionType,platform:'Netflix',viewed_at:new Date().toISOString()}})
     const {data:inserted,error:insertError}=await db.from('code_assignments').insert({client_id:client.id,customer_email:normalized,platform_id:platform,code:found.code,source_message_id:found.messageId,created_by:client.created_by}).select('id,code,platforms(name)').maybeSingle()
     if(insertError?.code==='23505')return json({message:'Ese código ya fue consultado. Solicita uno nuevo.'},409);if(insertError||!inserted)throw insertError||new Error('Insert')
     const viewed_at=new Date().toISOString();const {data:updated,error:updateError}=await db.from('code_assignments').update({status:'viewed',viewed_at}).eq('id',inserted.id).eq('status','available').select('id').maybeSingle();if(updateError||!updated)return json({message:'Este código ya fue consultado.'},409)
