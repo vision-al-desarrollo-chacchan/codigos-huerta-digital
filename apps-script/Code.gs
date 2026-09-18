@@ -15,8 +15,13 @@ function doPost(e) {
     const plataformaId = String(datos.platform || '').trim().toLowerCase();
     const plataforma = PLATFORMAS[plataformaId];
     if (!/^\S+@\S+\.\S+$/.test(correo) || !plataforma) return respuesta({ ok: false, message: 'Correo o plataforma inválidos.' });
-    const hilos = GmailApp.search(plataforma.consulta + ' newer_than:1d', 0, 50);
+    const consulta = plataformaId === 'netflix'
+      ? '(from:(netflix.com) OR subject:"Tu código de acceso temporal") newer_than:1d'
+      : plataforma.consulta + ' newer_than:1d';
+    const hilos = GmailApp.search(consulta, 0, 50);
     const mensajes = [];
+    const accesosNetflixSinCuentaVisible = [];
+    let encontroCorreoNetflix = false;
     hilos.forEach(function (hilo) { hilo.getMessages().forEach(function (mensaje) { mensajes.push(mensaje); }); });
     mensajes.sort(function (a, b) { return b.getDate().getTime() - a.getDate().getTime(); });
     for (const mensaje of mensajes) {
@@ -25,20 +30,42 @@ function doPost(e) {
       const asunto = mensaje.getSubject() || '';
       const cuerpoPlano = mensaje.getPlainBody() || '';
       const cuerpoHtml = mensaje.getBody() || '';
+      const contenidoOriginal = typeof mensaje.getRawContent === 'function' ? (mensaje.getRawContent() || '') : '';
       const destinatarios = (mensaje.getTo() + ',' + mensaje.getCc()).toLowerCase();
       const remitenteValido = plataforma.remitentes.some(function (dominio) { return remitente.includes(dominio); });
       // En mensajes reenviados, el destinatario original puede aparecer solamente
       // dentro del cuerpo y no en los encabezados To/Cc del Gmail central.
-      const referenciaCuenta = (destinatarios + '\n' + asunto + '\n' + cuerpoPlano + '\n' + cuerpoHtml).toLowerCase();
-      if (!remitenteValido || !referenciaCuenta.includes(correo)) continue;
+      const referenciaCuenta = (destinatarios + '\n' + asunto + '\n' + cuerpoPlano + '\n' + cuerpoHtml + '\n' + contenidoOriginal).toLowerCase();
+      if (!remitenteValido) continue;
       const texto = asunto + '\n' + cuerpoPlano + '\n' + limpiarHtml(cuerpoHtml);
       if (/restablecer|recuperar|contraseña|password reset|factura|pago|promoción|oferta|profile has been updated|perfil ha sido actualizado/i.test(texto)) continue;
+      const esAccesoTemporalNetflix = plataformaId === 'netflix' && /tu c[oó]digo de acceso temporal/i.test(asunto + '\n' + texto);
+      if (esAccesoTemporalNetflix) encontroCorreoNetflix = true;
+      if (!referenciaCuenta.includes(correo)) {
+        // Algunos reenvíos de Netflix eliminan el destinatario original. Solo se
+        // admite el respaldo si existe una única solicitud muy reciente, evitando
+        // entregar el enlace equivocado cuando hay varias solicitudes simultáneas.
+        if (esAccesoTemporalNetflix && Date.now() - mensaje.getDate().getTime() <= 10 * 60 * 1000) {
+          const enlaceRespaldo = extraerEnlaceNetflix(cuerpoHtml);
+          if (enlaceRespaldo) accesosNetflixSinCuentaVisible.push({ enlace: enlaceRespaldo, id: mensaje.getId() });
+        }
+        continue;
+      }
       const codigo = extraerCodigo(texto, plataformaId);
       if (codigo) return respuesta({ ok: true, code: codigo, messageId: mensaje.getId(), platform: plataforma.nombre });
-      if (plataformaId === 'netflix' && /tu c[oó]digo de acceso temporal/i.test(asunto + '\n' + texto)) {
+      if (esAccesoTemporalNetflix) {
         const enlace = extraerEnlaceNetflix(cuerpoHtml);
         if (enlace) return respuesta({ ok: true, actionUrl: enlace, messageId: mensaje.getId(), platform: plataforma.nombre });
       }
+    }
+    if (accesosNetflixSinCuentaVisible.length === 1) {
+      return respuesta({ ok: true, actionUrl: accesosNetflixSinCuentaVisible[0].enlace, messageId: accesosNetflixSinCuentaVisible[0].id, platform: plataforma.nombre });
+    }
+    if (accesosNetflixSinCuentaVisible.length > 1) {
+      return respuesta({ ok: false, message: 'Encontramos varias solicitudes recientes de Netflix. Solicita un código nuevo y vuelve a intentar.' });
+    }
+    if (encontroCorreoNetflix) {
+      return respuesta({ ok: false, message: 'Encontramos el correo de Netflix, pero no pudimos leer el botón Obtener código.' });
     }
     return respuesta({ ok: false, message: 'No encontramos un código reciente para esa cuenta.' });
   } catch (error) {
