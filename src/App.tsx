@@ -138,6 +138,7 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
     type?: "code" | "action";
     code?: string;
     action_url?: string;
+    action_kind?: "temporary_access" | "household";
     platform: string;
     viewed_at: string;
   } | null>(null);
@@ -311,11 +312,17 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
             <div className="result secure-result">
               {result.type === "action" && result.action_url ? (
                 <>
-                  <small>SOLICITUD DE ACCESO TEMPORAL</small>
-                  <strong className="action-title">Netflix recibió tu solicitud</strong>
-                  <p>Abre Netflix y pulsa “Obtener código”. El enlace es privado y temporal.</p>
+                  <small>{result.action_kind === "household" ? "CAMBIO DE HOGAR NETFLIX" : "SOLICITUD DE ACCESO TEMPORAL"}</small>
+                  <strong className="action-title">
+                    {result.action_kind === "household" ? "Confirma tu Hogar con Netflix" : "Netflix recibió tu solicitud"}
+                  </strong>
+                  <p>
+                    {result.action_kind === "household"
+                      ? "Abre Netflix y pulsa “Sí, lo solicité yo”. La confirmación debe hacerla el cliente manualmente."
+                      : "Abre Netflix y pulsa “Obtener código”. El enlace es privado y temporal."}
+                  </p>
                   <a className="action-link" href={result.action_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink size={17} /> Abrir solicitud de Netflix
+                    <ExternalLink size={17} /> {result.action_kind === "household" ? "Actualizar Hogar con Netflix" : "Abrir solicitud de Netflix"}
                   </a>
                 </>
               ) : (
