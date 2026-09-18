@@ -166,3 +166,23 @@ function probarConfiguracion() {
   const token = PropertiesService.getScriptProperties().getProperty('PANEL_TOKEN');
   console.log(token ? 'Token configurado correctamente.' : 'Falta configurar PANEL_TOKEN.');
 }
+
+function diagnosticarNetflix() {
+  const gmailConectado = Session.getEffectiveUser().getEmail() || '(Google no mostró el correo)';
+  const hilos = GmailApp.search('from:(info@account.netflix.com) newer_than:1d', 0, 10);
+  const resultados = [];
+  hilos.forEach(function (hilo) {
+    hilo.getMessages().forEach(function (mensaje) {
+      if (Date.now() - mensaje.getDate().getTime() <= 24 * 60 * 60 * 1000) {
+        resultados.push({ fecha: mensaje.getDate(), asunto: mensaje.getSubject() || '(sin asunto)' });
+      }
+    });
+  });
+  resultados.sort(function (a, b) { return b.fecha.getTime() - a.fecha.getTime(); });
+  console.log('Gmail conectado al Apps Script: ' + gmailConectado);
+  console.log('Correos recientes de Netflix encontrados: ' + resultados.length);
+  resultados.slice(0, 10).forEach(function (item, indice) {
+    console.log((indice + 1) + '. ' + item.fecha + ' | ' + item.asunto);
+  });
+  if (!resultados.length) console.log('CAUSA PROBABLE: el correo llegó a otro Gmail o el remitente no coincide con info@account.netflix.com.');
+}
