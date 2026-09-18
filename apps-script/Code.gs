@@ -16,9 +16,9 @@ function doPost(e) {
     const plataforma = PLATFORMAS[plataformaId];
     if (!/^\S+@\S+\.\S+$/.test(correo) || !plataforma) return respuesta({ ok: false, message: 'Correo o plataforma inválidos.' });
     const consulta = plataformaId === 'netflix'
-      ? '(from:(netflix.com) OR subject:"Tu código de acceso temporal" OR subject:"Importante: Cómo cambiar tu hogar Netflix") newer_than:1d'
+      ? 'from:(info@account.netflix.com) newer_than:1d {subject:"Tu código de acceso temporal" subject:"Importante: Cómo cambiar tu hogar Netflix"}'
       : plataforma.consulta + ' newer_than:1d';
-    const hilos = GmailApp.search(consulta, 0, 50);
+    const hilos = GmailApp.search(consulta, 0, plataformaId === 'netflix' ? 10 : 30);
     const mensajes = [];
     const accionesNetflixSinCuentaVisible = [];
     let encontroCorreoNetflix = false;
@@ -30,12 +30,11 @@ function doPost(e) {
       const asunto = mensaje.getSubject() || '';
       const cuerpoPlano = mensaje.getPlainBody() || '';
       const cuerpoHtml = mensaje.getBody() || '';
-      const contenidoOriginal = typeof mensaje.getRawContent === 'function' ? (mensaje.getRawContent() || '') : '';
       const destinatarios = (mensaje.getTo() + ',' + mensaje.getCc()).toLowerCase();
       const remitenteValido = plataforma.remitentes.some(function (dominio) { return remitente.includes(dominio); });
       // En mensajes reenviados, el destinatario original puede aparecer solamente
       // dentro del cuerpo y no en los encabezados To/Cc del Gmail central.
-      const referenciaCuenta = (destinatarios + '\n' + asunto + '\n' + cuerpoPlano + '\n' + cuerpoHtml + '\n' + contenidoOriginal).toLowerCase();
+      const referenciaCuenta = (destinatarios + '\n' + asunto + '\n' + cuerpoPlano + '\n' + cuerpoHtml).toLowerCase();
       if (!remitenteValido) continue;
       const texto = asunto + '\n' + cuerpoPlano + '\n' + limpiarHtml(cuerpoHtml);
       if (/restablecer|recuperar|contraseña|password reset|factura|pago|promoción|oferta|profile has been updated|perfil ha sido actualizado/i.test(texto)) continue;
@@ -73,7 +72,7 @@ function doPost(e) {
     if (encontroCorreoNetflix) {
       return respuesta({ ok: false, message: 'Encontramos el correo de Netflix, pero no pudimos leer el botón Obtener código.' });
     }
-    return respuesta({ ok: false, message: 'No encontramos un código reciente para esa cuenta.' });
+    return respuesta({ ok: false, message: plataformaId === 'netflix' ? 'No encontramos el correo reciente en el Gmail conectado al sistema.' : 'No encontramos un código reciente para esa cuenta.' });
   } catch (error) {
     return respuesta({ ok: false, message: 'No se pudo consultar Gmail.' });
   }
