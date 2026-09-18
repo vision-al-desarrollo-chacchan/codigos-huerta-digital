@@ -15,25 +15,76 @@ function doPost(e) {
     const plataformaId = String(datos.platform || '').trim().toLowerCase();
     const plataforma = PLATFORMAS[plataformaId];
     if (!/^\S+@\S+\.\S+$/.test(correo) || !plataforma) return respuesta({ ok: false, message: 'Correo o plataforma inválidos.' });
-    const hilos = GmailApp.search(plataforma.consulta + ' newer_than:1d', 0, 20);
+    const hilos = GmailApp.search(plataforma.consulta + ' newer_than:1d', 0, 50);
     const mensajes = [];
     hilos.forEach(function (hilo) { hilo.getMessages().forEach(function (mensaje) { mensajes.push(mensaje); }); });
     mensajes.sort(function (a, b) { return b.getDate().getTime() - a.getDate().getTime(); });
     for (const mensaje of mensajes) {
       if (Date.now() - mensaje.getDate().getTime() > 30 * 60 * 1000) continue;
       const remitente = mensaje.getFrom().toLowerCase();
+      const asunto = mensaje.getSubject() || '';
+      const cuerpoPlano = mensaje.getPlainBody() || '';
+      const cuerpoHtml = mensaje.getBody() || '';
       const destinatarios = (mensaje.getTo() + ',' + mensaje.getCc()).toLowerCase();
       const remitenteValido = plataforma.remitentes.some(function (dominio) { return remitente.includes(dominio); });
-      if (!remitenteValido || !destinatarios.includes(correo)) continue;
-      const texto = mensaje.getSubject() + '\n' + mensaje.getPlainBody();
+      // En mensajes reenviados, el destinatario original puede aparecer solamente
+      // dentro del cuerpo y no en los encabezados To/Cc del Gmail central.
+      const referenciaCuenta = (destinatarios + '\n' + asunto + '\n' + cuerpoPlano + '\n' + cuerpoHtml).toLowerCase();
+      if (!remitenteValido || !referenciaCuenta.includes(correo)) continue;
+      const texto = asunto + '\n' + cuerpoPlano + '\n' + limpiarHtml(cuerpoHtml);
       if (/restablecer|recuperar|contraseña|password reset|factura|pago|promoción|oferta|profile has been updated|perfil ha sido actualizado/i.test(texto)) continue;
-      const encontrado = texto.match(/(?:tu código de acceso único|código de acceso temporal|código de inicio de sesión|ingresa este código|código de verificación|verification code|login code|access code|one.time code)[\s\S]{0,300}?\b(\d{4}|\d{6})\b/i);
-      if (encontrado) return respuesta({ ok: true, code: encontrado[1], messageId: mensaje.getId(), platform: plataforma.nombre });
+      const codigo = extraerCodigo(texto, plataformaId);
+      if (codigo) return respuesta({ ok: true, code: codigo, messageId: mensaje.getId(), platform: plataforma.nombre });
     }
     return respuesta({ ok: false, message: 'No encontramos un código reciente para esa cuenta.' });
   } catch (error) {
     return respuesta({ ok: false, message: 'No se pudo consultar Gmail.' });
   }
+}
+
+function limpiarHtml(html) {
+  return String(html || '')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&aacute;|&#225;/gi, 'á')
+    .replace(/&eacute;|&#233;/gi, 'é')
+    .replace(/&iacute;|&#237;/gi, 'í')
+    .replace(/&oacute;|&#243;/gi, 'ó')
+    .replace(/&uacute;|&#250;/gi, 'ú')
+    .replace(/\s+/g, ' ');
+}
+
+function extraerCodigo(texto, plataformaId) {
+  const contenido = String(texto || '').replace(/\u00a0/g, ' ');
+  const numero = '(\\d(?:[\\s-]?\\d){3,5})';
+  const palabrasComunes = '(?:c[oó]digo(?: de acceso)?(?: único| temporal| de inicio de sesi[oó]n| de verificaci[oó]n)?|verification code|login code|access code|one[ .-]?time code|sign[ .-]?in code)';
+  const palabrasNetflix = '(?:c[oó]digo de Netflix|Netflix code|usa este c[oó]digo|use this code|ingresa este c[oó]digo|enter this code)';
+  const palabras = plataformaId === 'netflix' ? '(?:' + palabrasComunes + '|' + palabrasNetflix + ')' : palabrasComunes;
+  const patrones = [
+    new RegExp(palabras + '[\\s\\S]{0,400}?' + numero, 'i'),
+    new RegExp(numero + '[\\s\\S]{0,160}?' + palabras, 'i')
+  ];
+
+  for (let i = 0; i < patrones.length; i++) {
+    const coincidencia = contenido.match(patrones[i]);
+    if (!coincidencia) continue;
+    const candidato = coincidencia[1].replace(/\D/g, '');
+    if (candidato.length === 4 || candidato.length === 6) return candidato;
+  }
+
+  // Respaldo exclusivo para Netflix: algunos correos nuevos muestran el código
+  // como un bloque aislado sin una etiqueta reconocible en el cuerpo de texto.
+  if (plataformaId === 'netflix') {
+    const candidatos = contenido.match(/\b\d(?:[\s-]?\d){3,5}\b/g) || [];
+    const validos = candidatos.map(function (valor) { return valor.replace(/\D/g, ''); })
+      .filter(function (valor) { return valor.length === 4 || valor.length === 6; })
+      .filter(function (valor) { return !/^20\d{2}$/.test(valor); });
+    if (validos.length === 1) return validos[0];
+  }
+  return '';
 }
 
 function respuesta(datos) {
