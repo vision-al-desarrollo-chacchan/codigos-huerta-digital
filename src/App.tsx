@@ -16,6 +16,13 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import {
+  siAppletv,
+  siMax,
+  siNetflix,
+  siPrimevideo,
+  type SimpleIcon,
+} from "simple-icons";
 import { configured, supabase } from "./supabase";
 
 type Platform = { id: string; name: string };
@@ -49,13 +56,32 @@ const demoPlatforms: Platform[] = [
   { id: "prime", name: "Prime Video" },
   { id: "apple", name: "Apple TV+" },
 ];
-const platformMarks: Record<string, string> = {
-  netflix: "N",
-  disney: "Disney+",
-  max: "max",
-  prime: "prime",
-  apple: "tv+",
+const platformIcons: Partial<Record<string, SimpleIcon>> = {
+  netflix: siNetflix,
+  max: siMax,
+  prime: siPrimevideo,
+  apple: siAppletv,
 };
+
+function PlatformLogo({ platform }: { platform: string }) {
+  if (platform === "disney") {
+    return (
+      <span className="disney-logo" aria-hidden="true">
+        <i />
+        <span>Disney</span><b>+</b>
+      </span>
+    );
+  }
+
+  const icon = platformIcons[platform];
+  if (!icon) return null;
+
+  return (
+    <svg aria-hidden="true" className="platform-logo" viewBox="0 0 24 24">
+      <path d={icon.path} />
+    </svg>
+  );
+}
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -247,7 +273,9 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
                   setMessage("");
                 }}
               >
-                <span className="service-mark">{platformMarks[p.id]}</span>
+                <span className="service-mark">
+                  <PlatformLogo platform={p.id} />
+                </span>
                 <b>{p.name}</b>
                 {platform === p.id && (
                   <span className="service-check">

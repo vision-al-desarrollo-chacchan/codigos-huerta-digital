@@ -102,3 +102,13 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .secure-shell footer{background:#070919;border-color:#ffffff0d;color:#676e88}
 @media(max-width:980px){.secure-hero{grid-template-columns:1fr;width:min(760px,calc(100% - 32px));gap:28px;padding:34px 0}.experience-intro{text-align:center}.experience-intro h1 br{display:none}.experience-intro>p{margin:auto}.intro-features{display:flex;justify-content:center;gap:28px}.brand-signature{display:none}}
 @media(max-width:600px){.secure-shell nav{height:64px}.secure-shell .brand{font-size:16px}.secure-shell .brandmark{width:35px;height:35px}.install-app{padding:9px}.install-app span{display:none}.secure-hero{padding:25px 0}.experience-intro .secure-pill{margin-bottom:14px}.experience-intro h1{font-size:36px;letter-spacing:-2px;margin-bottom:12px}.experience-intro h1 em{display:block;font-size:.74em}.experience-intro>p{font-size:14px}.intro-features{display:none}.secure-card{padding:18px;border-radius:20px}.card-topline{padding-bottom:15px;margin-bottom:17px}.service-heading h2{font-size:21px}.service-grid{grid-template-columns:repeat(2,1fr)}.service-card{min-height:102px}.secure-shell footer{padding:18px}}
+
+/* Logotipos oficiales de las plataformas */
+.platform-logo{display:block;width:38px;height:30px;fill:currentColor}
+.service-card.netflix .platform-logo{width:19px;height:34px}
+.service-card.max .platform-logo,.service-card.prime .platform-logo{width:42px}
+.service-card.apple .platform-logo{width:39px}
+.disney-logo{position:relative;display:flex;align-items:baseline;color:#1464dd;font-size:13px;font-weight:800;line-height:1}
+.disney-logo i{position:absolute;left:1px;right:2px;top:-9px;height:12px;border-top:2px solid currentColor;border-radius:50%}
+.disney-logo span{font-family:cursive;font-size:16px;font-weight:700;letter-spacing:-1px}
+.disney-logo b{font-size:16px;margin-left:1px}
