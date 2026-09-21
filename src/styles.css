@@ -121,3 +121,31 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .service-card.max .platform-logo{width:42px;height:28px}
 .service-card.prime .platform-logo{width:42px;height:30px}
 .service-card.disney .supplied-platform-logo{width:49px;height:38px;border-radius:0}
+
+/* Apariencia azul marino inspirada en la referencia aprobada */
+.secure-shell{min-height:100vh;background:#07152d;color:#f6f8ff}
+.secure-shell:before{inset:72px 0 0;background:radial-gradient(ellipse at 84% 12%,#45d6ff35 0,transparent 20%),radial-gradient(ellipse at 73% 46%,#236fa83b 0,transparent 28%),linear-gradient(115deg,#07152d 0%,#081a36 58%,#092744 100%)}
+.secure-shell:after{left:auto;right:-9%;top:40px;bottom:auto;width:62%;height:70%;opacity:.55;background:radial-gradient(ellipse at 55% 20%,transparent 0 44%,#64dfff2b 45%,transparent 47%),radial-gradient(ellipse at 70% 40%,transparent 0 48%,#6e9cff20 49%,transparent 51%);mask-image:none}
+.secure-shell nav{height:64px;padding:0 max(24px,4.5vw);background:#07142bed;border-color:#ffffff12;box-shadow:0 5px 22px #01081655}
+.secure-shell .brandmark{width:34px;height:34px;border-radius:50%!important;background:#152848!important;box-shadow:inset 0 0 0 1px #ffffff1b!important}
+.brand-name{font-size:14px}.brand-name small{margin-top:3px;font-size:7px;color:#8190a9}
+.secure-shell .admin-link,.install-app{padding:8px 11px;border-radius:7px;font-size:11px;background:#10243c;color:#d7deeb}
+.secure-hero{grid-template-columns:minmax(270px,.72fr) minmax(570px,1.42fr);gap:clamp(36px,6vw,86px);width:min(1120px,calc(100% - 52px));padding:28px 0 34px}
+.experience-intro .secure-pill{margin-bottom:18px;padding:5px 10px;font-size:8px;background:#15324a;border-color:#91eaff55}
+.experience-intro h1{max-width:410px;margin-bottom:16px;font-size:clamp(42px,4.4vw,62px);line-height:1.03;letter-spacing:-3px}
+.experience-intro h1 em{font-size:1em;line-height:1.03;background:linear-gradient(180deg,#8ad8ff,#5892ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.experience-intro>p{max-width:390px;font-size:13px;line-height:1.55;color:#a9b7ca}
+.intro-features{gap:11px;margin-top:24px}.intro-features>div{gap:10px}.intro-features b{font-size:12px}.intro-features small{font-size:10px}.brand-signature{display:none}
+.secure-card{padding:22px;border:1px solid #8db7dc38;border-radius:17px;background:linear-gradient(145deg,#10243be8,#10253ce6);box-shadow:0 22px 65px #01081499,inset 0 1px #ffffff12;backdrop-filter:blur(13px)}
+.card-topline{padding-bottom:14px;margin-bottom:14px;font-size:11px}.live-status{font-size:10px}
+.service-heading h2{font-size:19px;margin-top:4px}.service-heading p{font-size:10px}.service-heading small,.query-heading>span{font-size:7px}
+.service-grid{gap:7px;margin:13px 0 16px}.service-card{min-height:89px;gap:8px;border-radius:8px;background:linear-gradient(150deg,#273d5b,#1a2c47);border-color:#ffffff18;box-shadow:inset 0 1px #ffffff10}
+.service-card:hover{transform:translateY(-2px)}.service-card.selected{transform:none;border-color:#2debf3;box-shadow:0 0 0 2px #2debf32c,0 0 18px #1dd9f071}
+.service-mark,.service-card .service-mark{width:42px;height:42px;min-width:42px;flex-basis:42px;border-radius:8px}.service-card>b{font-size:8px}.service-card.netflix .platform-logo{width:15px;height:27px}.service-card.apple .platform-logo{width:30px}.service-card.max .platform-logo,.service-card.prime .platform-logo{width:34px;height:24px}.service-card.disney .supplied-platform-logo{width:38px;height:36px}
+.service-check{right:-5px;top:-5px;width:17px;height:17px}.service-check svg{width:11px}
+.query-heading{padding-top:13px;margin-bottom:10px}.query-heading h3{font-size:12px;margin-top:3px!important}.query-heading h3 svg{width:13px}
+.secure-fields{gap:9px}.secure-card label{margin-bottom:5px;font-size:7px}.secure-input{height:38px;border-radius:7px;background:#0a182c}.secure-input svg{width:14px;margin-left:10px}.secure-card .secure-input input{height:36px;padding:0 9px;font-size:11px}
+.secure-search{height:40px;margin-top:11px;border-radius:6px;font-size:10px;background:linear-gradient(90deg,#24d9e8,#28c9ef 48%,#296df3);box-shadow:0 8px 20px #0875d150}
+.request-time{text-align:center;margin-top:7px;color:#7f8ca2;font-size:8px}.secure-shell footer{display:none}
+@media(max-width:980px){.secure-hero{padding:28px 0}.experience-intro h1{margin-inline:auto}.secure-card{max-width:720px;margin:auto}}
+@media(max-width:600px){.secure-shell:after{display:none}.secure-hero{width:min(100% - 24px,720px)}.experience-intro h1{font-size:38px}.secure-card{padding:16px}.service-grid{gap:8px}.service-card{min-height:92px}}
