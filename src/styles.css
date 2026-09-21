@@ -150,3 +150,12 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .request-time{text-align:center;margin-top:7px;color:#7f8ca2;font-size:8px}.secure-shell footer{display:none}
 @media(max-width:980px){.secure-hero{padding:28px 0}.experience-intro h1{margin-inline:auto}.secure-card{max-width:720px;margin:auto}}
 @media(max-width:600px){.secure-shell:after{display:none}.secure-hero{width:min(100% - 24px,720px)}.experience-intro h1{font-size:38px}.secure-card{padding:16px}.service-grid{gap:8px}.service-card{min-height:92px}}
+
+/* Corrección óptica del logotipo Max dentro de su contenedor */
+.service-card.max .supplied-platform-logo{
+  width:34px;
+  max-width:34px;
+  height:auto;
+  object-fit:contain;
+  object-position:center;
+}
