@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import {
   siAppletv,
+  siMax,
   siNetflix,
+  siPrimevideo,
   type SimpleIcon,
 } from "simple-icons";
 import { configured, supabase } from "./supabase";
@@ -56,14 +58,14 @@ const demoPlatforms: Platform[] = [
 ];
 const platformIcons: Partial<Record<string, SimpleIcon>> = {
   netflix: siNetflix,
+  max: siMax,
+  prime: siPrimevideo,
   apple: siAppletv,
 };
 
 function PlatformLogo({ platform }: { platform: string }) {
   const suppliedLogos: Partial<Record<string, string>> = {
     disney: "/logos/disney-plus.png",
-    max: "/logos/max.jpg",
-    prime: "/logos/prime-video.png",
   };
   const suppliedLogo = suppliedLogos[platform];
   if (suppliedLogo) {
