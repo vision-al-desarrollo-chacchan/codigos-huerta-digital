@@ -106,9 +106,9 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 /* Logotipos oficiales de las plataformas */
 .platform-logo{display:block;width:38px;height:30px;fill:currentColor}
 .service-card.netflix .platform-logo{width:19px;height:34px}
-.service-card.max .platform-logo,.service-card.prime .platform-logo{width:42px}
 .service-card.apple .platform-logo{width:39px}
-.disney-logo{position:relative;display:flex;align-items:baseline;color:#1464dd;font-size:13px;font-weight:800;line-height:1}
-.disney-logo i{position:absolute;left:1px;right:2px;top:-9px;height:12px;border-top:2px solid currentColor;border-radius:50%}
-.disney-logo span{font-family:cursive;font-size:16px;font-weight:700;letter-spacing:-1px}
-.disney-logo b{font-size:16px;margin-left:1px}
+.supplied-platform-logo{display:block;width:100%;height:100%;object-fit:cover;border-radius:11px}
+.service-card.disney .service-mark{overflow:hidden}
+.service-card.disney .supplied-platform-logo{width:200%;max-width:none;object-position:left center}
+.service-card.max .supplied-platform-logo{object-position:center}
+.service-card.prime .supplied-platform-logo{object-fit:cover}
