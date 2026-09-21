@@ -340,8 +340,9 @@ function Lookup({ onAdmin }: { onAdmin: () => void }) {
             }
           >
             <Search size={16} />
-              {loading ? "BUSCANDO TU CÓDIGO..." : "OBTENER MI CÓDIGO"}
+              {loading ? "BUSCANDO TU CÓDIGO..." : "SOLICITAR CÓDIGO"}
           </button>
+          <div className="request-time">◷ Tiempo estimado: &lt; 1 minuto</div>
           {result && (
             <div className="result secure-result">
               {result.type === "action" && result.action_url ? (
