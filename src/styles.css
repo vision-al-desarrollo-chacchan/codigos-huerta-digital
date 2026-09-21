@@ -109,6 +109,6 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .service-card.apple .platform-logo{width:39px}
 .supplied-platform-logo{display:block;width:100%;height:100%;object-fit:cover;border-radius:11px}
 .service-card.disney .service-mark{overflow:hidden}
-.service-card.disney .supplied-platform-logo{width:200%;max-width:none;object-position:left center}
+.service-card.disney .supplied-platform-logo{object-position:center}
 .service-card.max .supplied-platform-logo{object-position:center}
 .service-card.prime .supplied-platform-logo{object-fit:cover}
