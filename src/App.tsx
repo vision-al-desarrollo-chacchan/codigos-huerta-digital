@@ -66,6 +66,7 @@ const platformIcons: Partial<Record<string, SimpleIcon>> = {
 function PlatformLogo({ platform }: { platform: string }) {
   const suppliedLogos: Partial<Record<string, string>> = {
     disney: "/logos/disney-plus.png",
+    max: "/logos/max-streaming.svg",
   };
   const suppliedLogo = suppliedLogos[platform];
   if (suppliedLogo) {
