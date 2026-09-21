@@ -107,8 +107,8 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .platform-logo{display:block;width:38px;height:30px;fill:currentColor}
 .service-card.netflix .platform-logo{width:19px;height:34px}
 .service-card.apple .platform-logo{width:39px}
-.supplied-platform-logo{display:block;width:100%;height:100%;object-fit:cover;border-radius:11px}
-.service-card.disney .service-mark{overflow:hidden}
-.service-card.disney .supplied-platform-logo{object-position:center}
-.service-card.max .supplied-platform-logo{object-position:center}
-.service-card.prime .supplied-platform-logo{object-fit:cover}
+.service-card .service-mark{width:58px;height:48px;min-width:58px;padding:0;overflow:hidden;flex:0 0 58px}
+.supplied-platform-logo{display:block;width:100%;height:100%;object-fit:contain;object-position:center;border-radius:11px}
+.service-card.disney .supplied-platform-logo{width:48px;height:48px}
+.service-card.max .supplied-platform-logo{width:58px;height:48px}
+.service-card.prime .supplied-platform-logo{width:48px;height:48px}
