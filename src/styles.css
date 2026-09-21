@@ -112,3 +112,12 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .service-card.disney .supplied-platform-logo{width:48px;height:48px}
 .service-card.max .supplied-platform-logo{width:58px;height:48px}
 .service-card.prime .supplied-platform-logo{width:48px;height:48px}
+
+/* Presentación uniforme de marcas oficiales */
+.service-card.disney .service-mark,
+.service-card.max .service-mark,
+.service-card.prime .service-mark{background:#fff;color:#002be7}
+.service-card.prime .service-mark{color:#00a8e1}
+.service-card.max .platform-logo{width:42px;height:28px}
+.service-card.prime .platform-logo{width:42px;height:30px}
+.service-card.disney .supplied-platform-logo{width:49px;height:38px;border-radius:0}
