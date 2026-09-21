@@ -121,6 +121,7 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
 .service-card.max .platform-logo{width:42px;height:28px}
 .service-card.prime .platform-logo{width:42px;height:30px}
 .service-card.disney .supplied-platform-logo{width:49px;height:38px;border-radius:0}
+.service-card.max .supplied-platform-logo{width:44px;height:auto;border-radius:0}
 
 /* Apariencia azul marino inspirada en la referencia aprobada */
 .secure-shell{min-height:100vh;background:#07152d;color:#f6f8ff}
