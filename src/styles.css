@@ -159,3 +159,45 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
   object-fit:contain;
   object-position:center;
 }
+
+
+/* Fix responsive móvil: evita que el Centro de códigos quede fuera de pantalla */
+@media(max-width:600px){
+  html,body,#root,.shell,.secure-shell{width:100%;max-width:100%;overflow-x:hidden}
+  .secure-shell nav{width:100%;padding:0 12px;gap:8px}
+  .secure-shell .brand{min-width:0;gap:8px}
+  .brand-name{white-space:nowrap}
+  .nav-actions{flex:0 0 auto;gap:6px}
+  .secure-shell .admin-link{padding:8px}
+  .secure-shell .admin-link span{display:none}
+  .secure-hero{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    width:100%;
+    max-width:100%;
+    margin:0;
+    padding:24px 12px 28px;
+    gap:24px;
+  }
+  .experience-intro{width:100%;max-width:100%;text-align:center}
+  .experience-intro h1{max-width:100%;font-size:36px;letter-spacing:-2px}
+  .experience-intro>p{max-width:340px;margin-inline:auto}
+  .secure-card{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    margin:0;
+    padding:16px;
+  }
+  .service-grid{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .service-card{min-width:0}
+  .secure-fields{grid-template-columns:minmax(0,1fr);width:100%}
+  .secure-fields>div,.secure-input{min-width:0;width:100%}
+  .secure-card .secure-input input{min-width:0!important;width:100%!important}
+}
+@media(max-width:380px){
+  .brand-name small{display:none}
+  .secure-shell .brand{font-size:14px}
+  .experience-intro h1{font-size:32px}
+}
