@@ -1,8 +1,8 @@
 const PLATFORMAS = {
   netflix: { nombre: 'Netflix', consulta: 'from:(netflix.com)', remitentes: ['netflix.com'] },
   disney: { nombre: 'Disney+', consulta: 'from:(disneyplus.com OR disney.com)', remitentes: ['disneyplus.com', 'disney.com'] },
-  max: { nombre: 'Max', consulta: 'from:(max.com OR hbomax.com)', remitentes: ['max.com', 'hbomax.com'] },
-  prime: { nombre: 'Prime Video', consulta: 'from:(amazon.com OR primevideo.com)', remitentes: ['amazon.com', 'primevideo.com'] },
+  max: { nombre: 'Max', consulta: 'from:(no-reply@alerts.hbomax.com OR hbomax.com OR max.com)', remitentes: ['alerts.hbomax.com', 'hbomax.com', 'max.com'] },
+  prime: { nombre: 'Prime Video', consulta: 'from:(account-update@amazon.com OR amazon.com OR primevideo.com)', remitentes: ['amazon.com', 'primevideo.com'] },
   apple: { nombre: 'Apple TV+', consulta: 'from:(apple.com)', remitentes: ['apple.com'] }
 };
 
@@ -131,9 +131,17 @@ function limpiarHtml(html) {
 function extraerCodigo(texto, plataformaId) {
   const contenido = String(texto || '').replace(/\u00a0/g, ' ');
   const numero = '(\\d(?:[\\s-]?\\d){3,5})';
-  const palabrasComunes = '(?:c[oó]digo(?: de acceso)?(?: único| temporal| de inicio de sesi[oó]n| de verificaci[oó]n)?|verification code|login code|access code|one[ .-]?time code|sign[ .-]?in code)';
+  const palabrasComunes = '(?:c[oó]digo(?: de acceso)?(?: único| temporal| de inicio de sesi[oó]n| de verificaci[oó]n| de un solo uso)?|verification code|login code|access code|one[ .-]?time code|one[ .-]?time passcode|sign[ .-]?in code)';
   const palabrasNetflix = '(?:c[oó]digo de Netflix|Netflix code|usa este c[oó]digo|use this code|ingresa este c[oó]digo|enter this code)';
-  const palabras = plataformaId === 'netflix' ? '(?:' + palabrasComunes + '|' + palabrasNetflix + ')' : palabrasComunes;
+  const palabrasMax = '(?:tu c[oó]digo de un solo uso|c[oó]digo de un solo uso|one[ .-]?time code)';
+  const palabrasPrime = '(?:tu c[oó]digo de verificaci[oó]n(?: es)?|c[oó]digo de verificaci[oó]n|verification code|sign[ .-]?in code)';
+  const palabras = plataformaId === 'netflix'
+    ? '(?:' + palabrasComunes + '|' + palabrasNetflix + ')'
+    : plataformaId === 'max'
+      ? '(?:' + palabrasComunes + '|' + palabrasMax + ')'
+      : plataformaId === 'prime'
+        ? '(?:' + palabrasComunes + '|' + palabrasPrime + ')'
+        : palabrasComunes;
   const patrones = [
     new RegExp(palabras + '[\\s\\S]{0,400}?' + numero, 'i'),
     new RegExp(numero + '[\\s\\S]{0,160}?' + palabras, 'i')
