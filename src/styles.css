@@ -201,3 +201,27 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
   .secure-shell .brand{font-size:14px}
   .experience-intro h1{font-size:32px}
 }
+
+
+/* Admin móvil: permite recorrer tablas anchas sin cortar contenido */
+@media(max-width:800px){
+  .dashboard{width:100%;max-width:100%;overflow-x:hidden}
+  .dash-grid,.dash-grid>section{min-width:0;max-width:100%}
+  .assignment,.table-card{min-width:0;max-width:100%}
+  .table-wrap{
+    display:block;
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:visible;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-x pan-y;
+    overscroll-behavior-x:contain;
+  }
+  .table-wrap table{
+    width:max-content;
+    min-width:760px;
+  }
+  .form-grid>*{min-width:0}
+  .form-grid input,.form-grid select,.form-grid button{max-width:100%}
+}
