@@ -37,7 +37,9 @@ function doPost(e) {
       const referenciaCuenta = (destinatarios + '\n' + asunto + '\n' + cuerpoPlano + '\n' + cuerpoHtml).toLowerCase();
       if (!remitenteValido) continue;
       const texto = asunto + '\n' + cuerpoPlano + '\n' + limpiarHtml(cuerpoHtml);
-      if (/restablecer|recuperar|contraseña|password reset|factura|pago|promoción|oferta|profile has been updated|perfil ha sido actualizado/i.test(texto)) continue;
+      // Los avisos de inicio de sesión de Amazon dicen "Alguien que conoce tu contraseña"
+      // y aun así incluyen un código válido. No descartarlos por esa palabra aislada.
+      if (/restablecer(?: tu| la)? contrase(?:ñ|n)a|recuperar(?: tu| la)? contrase(?:ñ|n)a|password reset|reset (?:your )?password|factura|promoción|oferta|profile has been updated|perfil ha sido actualizado/i.test(texto)) continue;
       const esAccesoTemporalNetflix = plataformaId === 'netflix' && /tu c[oó]digo de acceso temporal/i.test(asunto + '\n' + texto);
       const esCambioHogarNetflix = plataformaId === 'netflix' && /(?:importante:\s*)?c[oó]mo cambiar tu hogar Netflix|cambiemos tu hogar Netflix/i.test(asunto + '\n' + texto);
       if (esAccesoTemporalNetflix || esCambioHogarNetflix) encontroCorreoNetflix = true;
