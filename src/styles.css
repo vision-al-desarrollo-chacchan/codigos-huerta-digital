@@ -225,3 +225,49 @@ radial-gradient(ellipse at 50% 68%,#251a67cc 0,transparent 52%)}
   .form-grid>*{min-width:0}
   .form-grid input,.form-grid select,.form-grid button{max-width:100%}
 }
+
+
+/* Optimización de espacio en escritorio: prioriza el Centro de códigos */
+@media(min-width:981px){
+  .secure-hero{
+    grid-template-columns:minmax(260px,.58fr) minmax(660px,1.62fr);
+    gap:clamp(28px,4vw,58px);
+    width:min(1240px,calc(100% - 56px));
+    padding:34px 0 42px;
+  }
+  .experience-intro{
+    align-self:center;
+    max-width:360px;
+  }
+  .experience-intro h1{
+    max-width:350px;
+    font-size:clamp(40px,3.7vw,54px);
+    line-height:1.04;
+    letter-spacing:-2.4px;
+    margin-bottom:14px;
+  }
+  .experience-intro h1 em{font-size:1em}
+  .experience-intro>p{
+    max-width:330px;
+    font-size:13px;
+    line-height:1.55;
+  }
+  .intro-features{
+    margin-top:21px;
+    gap:10px;
+  }
+  .secure-card{
+    max-width:none;
+    min-width:0;
+    padding:24px;
+  }
+  .service-grid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  .service-card{min-width:0}
+}
+@media(min-width:1180px){
+  .secure-card{padding:26px 28px}
+  .service-card{min-height:94px}
+  .secure-fields{grid-template-columns:1.65fr 1fr}
+}
